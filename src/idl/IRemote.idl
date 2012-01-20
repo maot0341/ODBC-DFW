@@ -1,0 +1,254 @@
+/****************************************************************************
+ 
+    Projekt:    Transport
+    Komponente: idl
+    Modul:      IPrognose.idl
+ 
+    IPrognose definiert die Schnittstelle zum Anstoss der Prognose
+    des Transport-Servers.
+ 
+    Systeme: Alpha, Linux, Win32
+ 
+    $Author: hasyjv $
+    $Date: 2007/10/10 11:41:14 $
+    $Revision: 1.76 $
+    $State: Exp $
+ 
+    Datum     Autor  Bemerkung
+    -------------------------------------------------------------------------
+    16.07.01  hh/mtk Erstellung
+    07.08.01  hks    Hasy-Programmierkonventionen, ustring
+    07.08.01  hks    Ausnahmen
+    08.08.01  hks    Aktualisierungsinterface ausgelagert 
+*****************************************************************************/
+
+#ifndef TP_IDL_IREMOTE_IDL
+#define TP_IDL_IREMOTE_IDL
+
+#pragma prefix "go.psi.de"
+
+ 
+//---------------------------------------------------------------------------
+module idl
+{
+
+	////-----------------------------------------
+	//// RETRUN
+	////-----------------------------------------
+	typedef short RETN;
+	typedef unsigned long ULONG;
+	typedef unsigned long POINTER;
+	////-----------------------------------------
+	//// Value-Types
+	////-----------------------------------------
+	//enum typValue { ValueSTRING, ValueNUMBER, ValueTIME, ValueBINARY, ValueTYP };
+	enum typTerm {TermBOOLEAN, TermINTEGER, TermNUMBER, TermTIME, TermSTRING, TermTYP };
+	typedef sequence<octet> typBinary;
+	////-----------------------------------------
+	//// Value
+	////-----------------------------------------
+	union typValue switch (typTerm)
+	{
+	case TermSTRING:
+		string aString;
+	case TermBOOLEAN:
+		boolean bBoolean;
+	case TermINTEGER:
+		long nInteger;
+	case TermNUMBER:
+		double dNumber;
+	case TermTIME:
+		double dTime;
+	};
+	////-----------------------------------------
+	//// Variant
+	////-----------------------------------------
+	struct typVariant
+	{
+		boolean isNull;
+		typValue aValue;
+	};
+	////-----------------------------------------
+	//// RECORD(SET)
+	////-----------------------------------------
+	typedef sequence<typVariant> typRecord;
+	typedef sequence<typRecord>  typRecordset;
+	////-----------------------------------------
+	//// Param
+	////-----------------------------------------
+	struct typParam
+	{
+		short m_nParam;
+		short m_nInputOutputType;
+		short m_nValueType;
+		short m_nParameterType;
+		long  m_nColumnSize;
+		short m_nDecimalDigits;
+		short m_nNullable;
+		typVariant m_aValue;
+	};
+	typedef sequence<typParam>  typParamset;
+	////-----------------------------------------
+	//// Desc
+	////-----------------------------------------
+	struct typDesc
+	{
+		long m_SQL_DESC_AUTO_UNIQUE_VALUE;
+		string m_SQL_DESC_BASE_COLUMN_NAME;
+		string m_SQL_DESC_BASE_TABLE_NAME;
+		long m_SQL_DESC_CASE_SENSITIVE;
+		string m_SQL_DESC_CATALOG_NAME;
+		short m_SQL_DESC_CONCISE_TYPE;
+//		void* m_SQL_DESC_DATA_PTR;
+		short m_SQL_DESC_DATETIME_INTERVAL_CODE;
+		long m_SQL_DESC_DATETIME_INTERVAL_PRECISION;
+		long m_SQL_DESC_DISPLAY_SIZE;
+		long m_SQL_DESC_FIXED_PREC_SCALE;
+//		long* m_SQL_DESC_INDICATOR_PTR;
+		string m_SQL_DESC_LABEL;
+		unsigned long m_SQL_DESC_LENGTH;
+		string m_SQL_DESC_LITERAL_PREFIX;
+		string m_SQL_DESC_LITERAL_SUFFIX;
+		string m_SQL_DESC_LOCAL_TYPE_NAME;
+		string m_SQL_DESC_NAME;
+		short m_SQL_DESC_NULLABLE;
+		long m_SQL_DESC_NUM_PREC_RADIX;
+		long m_SQL_DESC_OCTET_LENGTH;
+//		long* m_SQL_DESC_OCTET_LENGTH_PTR;
+		short m_SQL_DESC_PARAMETER_TYPE;
+		short m_SQL_DESC_PRECISION;
+		short m_SQL_DESC_ROWVER;
+		short m_SQL_DESC_SCALE;
+		string m_SQL_DESC_SCHEMA_NAME;
+		short m_SQL_DESC_SEARCHABLE;
+		string m_SQL_DESC_TABLE_NAME;
+		short m_SQL_DESC_TYPE;
+		string m_SQL_DESC_TYPE_NAME;
+		short m_SQL_DESC_UNNAMED;
+		short m_SQL_DESC_UNSIGNED;
+		short m_SQL_DESC_UPDATABLE;
+
+
+		short  type;
+		string name;
+		long   size;
+		short  digits;
+		short  nullable;
+	};
+	typedef sequence<typDesc> typHeader;
+	////-----------------------------------------
+	//// STATUS RECORD
+	////-----------------------------------------
+	struct typStatus
+	{
+		char SQLState[6];
+		long nError;
+		string strError;
+	};
+	typedef sequence<typStatus> typStatusSeq;
+
+	//exception SQLException { string state; short errno; string message; };
+
+	////-----------------------------------------
+	//// INTERFACE
+	////-----------------------------------------
+	interface IHost;
+	interface IConnection;
+	interface IStmt;
+	////-----------------------------------------
+	const string srvtName_IHost = "dbhost";
+	interface IHost
+	{
+		void shutdown (in boolean wait_for_completion);
+		IConnection login (in string auth);
+		void ping();
+		void exec (in string cmd);
+	};
+	////-----------------------------------------
+	interface IConnection
+	{
+
+		IStmt SQLAllocStmt();
+		void logout();
+		void ping();
+
+		RETN SQLError
+		( out string szSQLState
+		, out short nNativeError
+		, out string szMessageTest
+		);
+	};
+	////-----------------------------------------
+	interface IStmt
+	{
+		void ping();
+		void exec (in string cmd);
+		void destroy();
+		void desc(inout typHeader header);
+
+		RETN SQLTables
+		( in string catalog
+		, in string schema
+		, in string table
+		, in string type
+		);
+
+		RETN SQLColumns
+		( in string catalog
+		, in string schema
+		, in string table
+		, in string column
+		);
+
+		RETN SQLSpecialColumns
+		( in string catalog
+		, in string schema
+		, in string table
+		, in short scope
+		, in short nullable
+		);
+
+		RETN SQLStatistics
+		( in string catalog
+		, in string schema
+		, in string table
+		, in short nUnique
+		, in short nReserved
+		);
+
+		RETN SQLParams (in typParamset params);
+		RETN SQLPrepare (in string sql);
+		RETN SQLExecute ();
+		RETN SQLNumResultCols (out short columns);
+		RETN SQLGetTypeInfo (in short datatyp);
+		RETN SQLFetch (in ULONG iRow, in ULONG nRow, out typRecord record);
+		RETN SQLDescribeParams (inout typParamset params);
+
+		// faster then (out typRecord record)
+		RETN SQLFetchRef (in ULONG iRow, in ULONG nRow, inout typRecord record); 
+
+		RETN SQLColAttribute
+		( in unsigned short col
+		, in unsigned short attr
+		, out typVariant value
+		);
+
+		RETN SQLDescribeCol
+		( in unsigned short col
+		, out string name
+		, out short datatype
+		, out unsigned long columnsize
+		, out short decimaldigits
+		, out short nullable
+		);
+
+
+		RETN SQLError
+		( out string state
+		, out short errorcode
+		, out string message
+		);
+	};
+};
+//---------------------------------------------------------------------------
+#endif // TP_IDL_IREMOTE_IDL
