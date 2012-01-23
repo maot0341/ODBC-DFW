@@ -192,8 +192,8 @@ SQLColumns(SQLHSTMT hstmt
 	CORBA::String_var strSchema = SQLString (pSchema, nSchema);
 	CORBA::String_var strTable = SQLString (pTable, nTable);
 	CORBA::String_var strColumn = SQLString (pColumn, nColumn);
-	idl::RETN nRetn = (*pStmt)->SQLColumns (strCatalog, strSchema, strTable, strColumn);
-	return nRetn;
+	return pStmt->SQLColumns (strCatalog, strSchema, strTable, strColumn);
+//	return pStmt->RETN();
 	EXCEPTION(hstmt);
 	return SQL_ERROR;
 }
@@ -295,7 +295,7 @@ SQLError (SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt
 	CORBA::String_var crbState;
 	CORBA::Short crbErrorCode;
 	CORBA::String_var crbMessage;
-	idl::RETN nRetn = SQL_ERROR;
+	SQLRETURN nRetn = SQL_ERROR;
 	CHandle * pHandle = 0;
 	const char * szState = 0;
 	const char * szText;
@@ -307,7 +307,7 @@ SQLError (SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt
 	{
 		CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 		pHandle = pStmt;
-		nRetn = (*pStmt)->SQLError (crbState, crbErrorCode, crbMessage);
+		nRetn = pStmt->SQLError (crbState, crbErrorCode, crbMessage);
 		szText = crbMessage;
 		szState = crbState;
 		nCode = crbErrorCode;
@@ -358,20 +358,12 @@ SQLError (SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt
 	if (hdbc) try {
 	CDatabase * pDBC = static_cast<CDatabase*>(hdbc);
 	pHandle = pDBC;
-	nRetn = (*pDBC)->SQLError (crbState, crbErrorCode, crbMessage);
+	nRetn = pDBC->SQLError (crbState, crbErrorCode, crbMessage);
 	szText = crbMessage;
 	szState = crbState;
 	nCode = crbErrorCode;
 	EXCEPTION (&aHandle);
 
-	const CSQLError::record_t * pError = (pHandle) ? pHandle->m_aError.fetch() : 0;
-	if (pError)
-	{
-		szText = pError->szSQL_DIAG_MESSAGE_TEXT;
-		szState = pError->szSQL_DIAG_SQLSTATE;
-		nCode = pError->nSQL_DIAG_NATIVE;
-		nRetn = SQL_SUCCESS;
-	}
 	if (!szState)
 		return SQL_NO_DATA_FOUND;
 
@@ -411,7 +403,7 @@ SQLExecute (SQLHSTMT hstmt)
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
-	idl::RETN nRetn = pStmt->SQLExecute();
+	SQLRETURN nRetn = pStmt->SQLExecute();
 	return SQL_SUCCESS;
 	EXCEPTION (hstmt);
 	return SQL_ERROR;
@@ -485,7 +477,7 @@ SQLFreeStmt (SQLHSTMT hstmt, SQLUSMALLINT nOption)
 	trace ("0x%0x SQLFreeStmt %s\n", hstmt, szOption);
 	//TRACELN ("SQLFreeStmt");
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
-	idl::RETN nRetn = SQL_SUCCESS; 
+	SQLRETURN nRetn = SQL_SUCCESS; 
 	if (nOption == SQL_DROP)
 		delete pStmt;
 	else
@@ -567,7 +559,7 @@ SQLNumResultCols (SQLHSTMT hstmt, SQLSMALLINT *pCols)
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
-	idl::RETN nRetn = (*pStmt)->SQLNumResultCols (*pCols);
+	SQLRETURN nRetn = pStmt->SQLNumResultCols (pCols);
 	return nRetn;
 	EXCEPTION (hstmt);
 	return SQL_ERROR;
@@ -665,7 +657,7 @@ SQLColAttribute (SQLHSTMT hstmt
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
 	idl::typVariant_var crbValue;
-	idl::RETN nRetn = (*pStmt)->SQLColAttribute (iCol - 1, nDescType, crbValue);
+	SQLRETURN nRetn = pStmt->SQLColAttribute (iCol - 1, nDescType, crbValue);
 	ATTRN (SQL_DESC_AUTO_UNIQUE_VALUE);
 	switch (nDescType)
 	{
@@ -820,7 +812,7 @@ SQLPrepare (SQLHSTMT hstmt, SQLCHAR *szInSQL, SQLINTEGER nLength)
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
 	pStmt->prepare (szSQL);
-	idl::RETN nRetn = (*pStmt)->SQLPrepare (szSQL);
+	SQLRETURN nRetn = pStmt->SQLPrepare (szSQL);
 	return nRetn;
 #if 1
 	EXCEPTION (hstmt);
@@ -941,7 +933,7 @@ SQLSpecialColumns(SQLHSTMT hstmt
 	CORBA::String_var strCatalog = SQLString (pCatalog, nCatalog);
 	CORBA::String_var strSchema = SQLString (pSchema, nSchema);
 	CORBA::String_var strTable = SQLString (pTable, nTable);
-	idl::RETN nRetn = (*pStmt)->SQLSpecialColumns (strCatalog, strSchema, strTable, nScope, nNullable);
+	SQLRETURN nRetn = pStmt->SQLSpecialColumns (strCatalog, strSchema, strTable, nScope, nNullable);
 	return nRetn;
 	EXCEPTION (hstmt);
 	return SQL_ERROR;
@@ -962,7 +954,7 @@ SQLStatistics (SQLHSTMT hstmt
 	CORBA::String_var strCatalog = SQLString (pCatalog, nCatalog);
 	CORBA::String_var strSchema = SQLString (pSchema, nSchema);
 	CORBA::String_var strTable = SQLString (pTable, nTable);
-	idl::RETN nRetn = (*pStmt)->SQLStatistics (strCatalog, strSchema, strTable, nUnique, nReserved);
+	SQLRETURN nRetn = pStmt->SQLStatistics (strCatalog, strSchema, strTable, nUnique, nReserved);
 	return nRetn;
 #if 0
 	if (hstmt == SQL_NULL_HANDLE)

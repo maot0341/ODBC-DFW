@@ -33,9 +33,8 @@ module idl
 {
 
 	////-----------------------------------------
-	//// RETRUN
+	//// Types
 	////-----------------------------------------
-	typedef short RETN;
 	typedef unsigned long ULONG;
 	typedef unsigned long POINTER;
 	////-----------------------------------------
@@ -139,16 +138,24 @@ module idl
 	////-----------------------------------------
 	//// STATUS RECORD
 	////-----------------------------------------
-	struct typStatus
+	struct typDiagItem
 	{
 		char SQLState[6];
 		long nError;
 		string strError;
+		string strFile;
+		long nLine;
 	};
-	typedef sequence<typStatus> typStatusSeq;
-
-	//exception SQLException { string state; short errno; string message; };
-
+	typedef sequence<typDiagItem> typDiagSeq;
+	////-----------------------------------------
+	//// RETRUN
+	////-----------------------------------------
+	//typedef short RETN;
+	struct RETN
+	{
+		short nRetn;
+		typDiagSeq aDiag;
+	};
 	////-----------------------------------------
 	//// INTERFACE
 	////-----------------------------------------
@@ -171,12 +178,6 @@ module idl
 		IStmt SQLAllocStmt();
 		void logout();
 		void ping();
-
-		RETN SQLError
-		( out string szSQLState
-		, out short nNativeError
-		, out string szMessageTest
-		);
 	};
 	////-----------------------------------------
 	interface IStmt
@@ -242,12 +243,6 @@ module idl
 		, out short nullable
 		);
 
-
-		RETN SQLError
-		( out string state
-		, out short errorcode
-		, out string message
-		);
 	};
 };
 //---------------------------------------------------------------------------

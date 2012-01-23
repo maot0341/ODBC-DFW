@@ -24,6 +24,7 @@
 
 #include <OB/CORBA.h>
 #include <idl/IRemote_idl.h>
+#include "SQLException.h"
 
 #include <windows.h>
 #include <sql.h>
@@ -31,7 +32,6 @@
 #include <sqltypes.h>
 
 #include <list>
-#include "SQLError.h"
 
 class CDriver;
 class CEnvironment;
@@ -48,12 +48,15 @@ public:
 	CHandle (CHandle * parent);
 	virtual ~CHandle();
 	void clear();
-	void error (const CSQLException & exc) { m_aError.set (exc); }
+	void error (const CSQLException & exc);
 
+	SQLRETURN SQLError (CORBA::String_var & crbState, CORBA::Short &crbErrorCode, CORBA::String_var & crbMessage);
 	CHandle * m_paParent;
 	std::list<CHandle*> m_aChildList;
-//	std::vector<typError> m_aError;
-	CSQLError m_aError;
+	idl::RETN_var m_vRetn;
+	short RETN() const { return (&m_vRetn == 0) ? SQL_SUCCESS : m_vRetn->nRetn; }
+
+//	CSQLError m_aError;
 	int m_iError;
 };
 //---------------------------------------------------------------------------
@@ -141,5 +144,13 @@ public:
 	SQLINTEGER nLen;
 	SQLINTEGER * pInd;
 };
+//---------------------------------------------------------------------------
+inline
+bool operator!= (const idl::RETN_var & vRetn, short nRetn)
+{
+	if (&vRetn == 0)
+		return false;
+	return vRetn->nRetn != nRetn;
+}
 //---------------------------------------------------------------------------
 #endif

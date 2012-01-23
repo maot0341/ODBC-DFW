@@ -31,6 +31,7 @@ CHandle::CHandle (CHandle * paParent)
 	if (paParent)
 		paParent->m_aChildList.push_back (this);
 	m_paParent = paParent;
+	m_iError = 0;
 }
 //---------------------------------------------------------------------------
 CHandle::~CHandle()
@@ -51,6 +52,39 @@ void CHandle::clear()
 		delete pChild;
 	}
 	m_aChildList.clear();
+	m_vRetn = 0;
+}
+//---------------------------------------------------------------------------
+void CHandle::error (const CSQLException & aExc)
+{
+	if (m_vRetn == 0)
+		m_vRetn = new idl::RETN;
+	idl::typDiagSeq & raList = m_vRetn->aDiag;
+	int i = raList.length();
+	raList.length (i+1);
+	idl::typDiagItem & raDiag = raList[i];
+	strncpy (raDiag.SQLState, aExc.state(), 6);
+	raDiag.nError = aExc.code();
+	raDiag.strError = aExc.text();
+
+}
+//---------------------------------------------------------------------------
+SQLRETURN 
+CHandle::SQLError (CORBA::String_var & crbState, CORBA::Short &crbErrorCode, CORBA::String_var & crbMessage)
+{
+	if (m_vRetn == 0)
+		return SQL_NO_DATA;
+	const idl::typDiagSeq & aList = m_vRetn->aDiag;
+	int nList = aList.length();
+	if (m_iError >= nList)
+		return SQL_NO_DATA;
+	const idl::typDiagItem & aDiag = aList[m_iError++];
+	const char * szText = aDiag.strError;
+	const char * szState = aDiag.SQLState;
+	crbState = szState;
+	crbMessage = szText;
+	crbErrorCode = aDiag.nError;
+	return SQL_SUCCESS;
 }
 //---------------------------------------------------------------------------
 // DRIVER

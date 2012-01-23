@@ -160,11 +160,11 @@ SOURCE=.\SQLDriverConnect.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLError.cpp
+SOURCE=.\SQLException.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLError.h
+SOURCE=.\SQLException.h
 # End Source File
 # Begin Source File
 

@@ -152,21 +152,6 @@ throw(::CORBA::SystemException)
 	return vStmt._retn();
 }
 //---------------------------------------------------------------------------
-idl::RETN
-IConnection_impl::SQLError
-( CORBA::String_out crbState
-, CORBA::Short_out crbErrorCode
-, CORBA::String_out crbMessage
-)
-throw(::CORBA::SystemException)
-{
-	crbState = CORBA::string_dup ("");
-	crbErrorCode = 0;
-	crbMessage = CORBA::string_dup ("");
-	return SQL_NO_DATA;
-}
-
-//---------------------------------------------------------------------------
 // Stmt -- Interface
 //---------------------------------------------------------------------------
 IStmt_impl::IStmt_impl(IConnection_impl *pDBC)
@@ -239,7 +224,28 @@ throw(::CORBA::SystemException)
 	}
 }
 //---------------------------------------------------------------------------
-idl::RETN
+void
+IStmt_impl::clear()
+{
+	m_aTablePtr = auto_ptr<CTableImpl> (0);
+}
+//---------------------------------------------------------------------------
+idl::RETN*
+IStmt_impl::RETN (short nRetn, const CException * pExc)
+{
+	idl::RETN* pRetn = new idl::RETN;
+	pRetn->nRetn = nRetn;
+	if (pExc == 0)
+		return pRetn;
+	pRetn->aDiag.length(1);
+	idl::typDiagItem & raDiag = pRetn->aDiag[0];
+	raDiag.nError = pExc->nId;
+	strncpy (raDiag.SQLState, pExc->szState , 6);
+	raDiag.strError = (const char*)pExc->strText.c_str();
+	return pRetn;
+}
+//---------------------------------------------------------------------------
+idl::RETN*
 IStmt_impl::SQLTables
 ( const char* szCatalog
 , const char* szSchema
@@ -249,14 +255,13 @@ throw(::CORBA::SystemException)
 {
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return SQL_INVALID_HANDLE;
-	m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = "SQLTables";
+		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = pDatabase->SQLTables (szCatalog, szSchema, szTable, szType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLColumns
 ( const char* szCatalog
 , const char* szSchema
@@ -266,14 +271,13 @@ throw(::CORBA::SystemException)
 {
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return SQL_INVALID_HANDLE;
-	m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = "SQLColumns";
+		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = new CSQLColumns(szCatalog, szSchema, szTable, szColumn);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLSpecialColumns
 ( const char* szCatalog
 , const char* szSchema
@@ -285,14 +289,13 @@ throw(::CORBA::SystemException)
 {
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return SQL_INVALID_HANDLE;
-	m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = "SQLSpecialColumns";
+		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = new CSQLSpecialColumns(0, szCatalog, szSchema, szTable, nScope, nNullable);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLStatistics
 ( const char* szCatalog
 , const char* szSchema
@@ -302,29 +305,23 @@ IStmt_impl::SQLStatistics
 )
 throw(::CORBA::SystemException)
 {
+	idl::RETN_var vRetn = new idl::RETN;
+	vRetn->nRetn = SQL_INVALID_HANDLE;
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return SQL_INVALID_HANDLE;
-	m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = "SQLStatistics";
+		return vRetn._retn();
 	CTableImpl * pTable = new CSQLStatistics (szCatalog, szSchema, szTable, nUnique, nReserved);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-void
-IStmt_impl::clear()
-{
-	m_aTablePtr = auto_ptr<CTableImpl> (0);
-	m_aError.clear();
-}
-//---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLParams (const idl::typParamset & crbParamset)
 throw(::CORBA::SystemException)
 {
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	vector<CParam*> & raParamset =  pTable->m_aStmt.m_aParam;
 	const short nParam = crbParamset.length();
 	short i;
@@ -347,68 +344,66 @@ throw(::CORBA::SystemException)
 		sqlp::CParam * pParam = raParamset[i];
 		pParam->setNull();
 	}
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLPrepare(const char* szSQL)
 throw(::CORBA::SystemException)
 {
 	clear();
 	try
 	{
-		m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = szSQL;
 		CSQLQuery * pTable = new CSQLQuery(szSQL);
 		ASSUME (pTable);
 		m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	}
 	catch (const CException & aErr)
 	{
-		return m_aError.set (SQL_ERROR, aErr);
+		return RETN (SQL_ERROR, &aErr);
 	}
 	catch (...)
 	{
-		return m_aError.set (SQL_ERROR, "42000", 900, "Syntax error or access violation %s:%d", __FILE__, __LINE__);
+		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
 	}
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLExecute ()
 throw(::CORBA::SystemException)
 {
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	pTable->open();
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLNumResultCols (short & rnColumns)
 throw(::CORBA::SystemException)
 {
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	rnColumns = pTable->cols();
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLGetTypeInfo (short nDataType)
 throw(::CORBA::SystemException)
 {
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return SQL_INVALID_HANDLE;
-	m_aError.m_szSQL_DIAG_DYNAMIC_FUNCTION = "SQLGetTypeInfo";
+		return RETN (SQL_INVALID_HANDLE);
 	CSQLGetTypeInfo * pTable = pDatabase->SQLGetTypeInfo(nDataType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	return SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLFetch (ULONG iRow, ULONG nRow, idl::typRecord_out pRecord)
 throw(::CORBA::SystemException)
 {
@@ -417,40 +412,40 @@ throw(::CORBA::SystemException)
 	assert (pRecord != 0);
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	if (nRow == 0)
 		nRow = pTable->rows();
 	if (!pTable->read (iRow, nRow, *pRecord))
-		return SQL_NO_DATA;
+		return RETN (SQL_NO_DATA);
 	time_t te = time(0);
 	time_t td = te - ta;
 //	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
-	return  SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLFetchRef (ULONG iRow, ULONG nRow, idl::typRecord & raRecord)
 throw(::CORBA::SystemException)
 {
 	ta = time(0);
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	if (!pTable->read (iRow, nRow, raRecord))
-		return SQL_NO_DATA;
+		return RETN (SQL_NO_DATA);
 	time_t te = time(0);
 	time_t td = te - ta;
 //	trace ("SQLFetchRef [%d] timing: %d s\n", iRow, td);
-	return  SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLDescribeParams (idl::typParamset & raParamset)
 throw(::CORBA::SystemException)
 {
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	const vector<CParam*> & aParamset =  pTable->m_aStmt.m_aParam;
 	const short nParam = aParamset.size();
 	if (raParamset.length() < nParam)
@@ -472,10 +467,10 @@ throw(::CORBA::SystemException)
 		raParam.m_nNullable = pParam->Nullable();
 		idlnull (raParam.m_aValue, nType);
 	}
-	return  SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLColAttribute
 ( CORBA::UShort crbColumn
 , CORBA::UShort crbAttr
@@ -485,13 +480,13 @@ throw(::CORBA::SystemException)
 	crbValue = new idl::typVariant;
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	CValue aValue = pTable->attr (crbAttr);
 	idlcpy (crbValue, aValue);
-	return  SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+idl::RETN*
 IStmt_impl::SQLDescribeCol
 ( CORBA::UShort crbColumn
 , CORBA::String_out crbName
@@ -503,19 +498,20 @@ throw(::CORBA::SystemException)
 {
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	const CDesc * pDesc = pTable->desc (crbColumn);
 	if (!pDesc)
-		return SQL_INVALID_HANDLE;
+		return RETN (SQL_INVALID_HANDLE);
 	crbName = CORBA::string_dup (pDesc->name());
 	crbDataType = pDesc->type();
 	crbColumnSize = pDesc->size();
 	crbDecimalDigits = pDesc->digits();
 	crbNullable = pDesc->nullable();
-	return  SQL_SUCCESS;
+	return RETN (SQL_SUCCESS);
 }
 //---------------------------------------------------------------------------
-idl::RETN
+#if 0
+idl::RETN*
 IStmt_impl::SQLError
 ( CORBA::String_out crbState
 , CORBA::Short_out crbErrorCode
@@ -532,12 +528,13 @@ throw(::CORBA::SystemException)
 			crbMessage = CORBA::string_dup (pRecord->szSQL_DIAG_MESSAGE_TEXT);
 		else
 			crbMessage = CORBA::string_dup ("");
-		return SQL_SUCCESS;
+		return RETN (SQL_SUCCESS);
 	}
 	crbState = CORBA::string_dup ("00000");
 	crbErrorCode = 0;
 	crbMessage = CORBA::string_dup ("");
-	return SQL_NO_DATA;
+	return RETN (SQL_NO_DATA);
 }
+#endif
 //---------------------------------------------------------------------------
 

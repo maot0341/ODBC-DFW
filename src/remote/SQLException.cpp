@@ -19,35 +19,39 @@
 ***************************************************************************************/
 #pragma warning (disable:4786)
 
-#include <OB/CORBA.h>
-#include <windows.h>
+
+#include "SQLException.h"
+#include <stdx/utils.h>
+#include <stdarg.h>
 #include <sql.h>
-#include <sqlext.h>
-#include <stdx/debug.h>
-#include "CStmtHandle.h"
-#include "driver.h"
 
 using namespace stdx;
 //---------------------------------------------------------------------------
-SQLRETURN SQL_API
-SQLTables (SQLHSTMT hstmt
-, SQLCHAR *pCatalog, SQLSMALLINT nCatalog
-, SQLCHAR *pSchema, SQLSMALLINT nSchema
-, SQLCHAR *pTable, SQLSMALLINT nTable
-, SQLCHAR *pType, SQLSMALLINT nType)
+//---------------------------------------------------------------------------
+CSQLException::CSQLException (const char * file, size_t line)
+: m_szFile(file)
+, m_nLine(line)
+, m_nCode(0)
 {
-	TRY ("SQLTables");
-	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
-	if (!pStmt)
-		return SQL_INVALID_HANDLE;
-	pStmt->prepare();
-	CORBA::String_var strCatalog = SQLString (pCatalog, nCatalog);
-	CORBA::String_var strSchema = SQLString (pSchema, nSchema);
-	CORBA::String_var strTable = SQLString (pTable, nTable);
-	CORBA::String_var strType = SQLString (pType, nType);
-	SQLRETURN nRetn = pStmt->SQLTables (strCatalog, strSchema, strTable, strType);
-	return nRetn;
-	EXCEPTION(hstmt);
-	return SQL_ERROR;
+	*m_szState = 0;
+}
+//---------------------------------------------------------------------------
+CSQLException::~CSQLException()
+{
+}
+//---------------------------------------------------------------------------
+const CSQLException &
+CSQLException::set (const char * szState, long nError, const char * szFormat, ...)
+{
+	char szBuff[8000];
+	va_list aArgs;
+	va_start (aArgs, szFormat);
+	vsprintf (szBuff, szFormat, aArgs);
+	va_end(aArgs);
+	m_strText = szBuff;
+	strncpy (m_szState, szState, 5);
+	m_szState[5] = 0;
+	m_nCode = nError;
+	return *this;
 }
 //---------------------------------------------------------------------------

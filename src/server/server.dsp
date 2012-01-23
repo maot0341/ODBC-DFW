@@ -96,14 +96,6 @@ SOURCE=.\SQLColumns.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\SQLError.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\SQLError.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\SQLGetTypeInfo.cpp
 # End Source File
 # Begin Source File

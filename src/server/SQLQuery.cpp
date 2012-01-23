@@ -31,8 +31,6 @@ using namespace stdx;
 extern int yyparse();
 extern void yyinit (CStatement *, FILE*);
 //---------------------------------------------------------------------------
-//CSQLTables CSQLTables::ms_aInstance;
-//---------------------------------------------------------------------------
 extern int yydebug;
 CSQLQuery::CSQLQuery (const char * szSQL)
 : m_aStmt (CDatabase::Instance())

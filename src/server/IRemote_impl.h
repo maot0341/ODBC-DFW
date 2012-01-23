@@ -31,7 +31,6 @@
 #include <sqlplib/sqlp.h>
 #include <list>
 #include "CTableImpl.h"
-#include "SQLError.h"
 
 using namespace std;
 using namespace sqlp;
@@ -76,13 +75,6 @@ public:
 	////-----------------------------------------
 	void ping()
 	throw(::CORBA::SystemException);
-	////-----------------------------------------
-	idl::RETN SQLError
-	( CORBA::String_out szSQLState
-	, CORBA::Short_out nNativeError
-	, CORBA::String_out szMessgae
-	)
-	throw(::CORBA::SystemException);
 
 
 	list<IStmt_impl*> m_aStmtList;
@@ -112,8 +104,9 @@ public:
 
 	void clear();
 
+	idl::RETN* RETN(short n, const CException* exc=0);
 	////-----------------------------------------
-	idl::RETN
+	idl::RETN*
 	SQLTables
 	( const char* catalog
 	, const char* schema
@@ -122,7 +115,7 @@ public:
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN
+	idl::RETN*
 	SQLSpecialColumns
 	( const char* catalog
 	, const char* schema
@@ -132,7 +125,7 @@ public:
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN
+	idl::RETN*
 	SQLStatistics
 	( const char* catalog
 	, const char* schema
@@ -142,7 +135,7 @@ public:
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN
+	idl::RETN*
 	SQLColumns
 	( const char* catalog
 	, const char* schema
@@ -151,35 +144,35 @@ public:
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLParams (const idl::typParamset& params)
+	idl::RETN* SQLParams (const idl::typParamset& params)
 	throw(::CORBA::SystemException);
-	idl::RETN SQLPrepare (const char* sql)
+	idl::RETN* SQLPrepare (const char* sql)
 	throw(::CORBA::SystemException);
-	idl::RETN SQLExecute()
+	idl::RETN* SQLExecute()
 	throw(::CORBA::SystemException);
-	idl::RETN SQLNumResultCols (short & columns)
-	throw(::CORBA::SystemException);
-	////-----------------------------------------
-	idl::RETN SQLGetTypeInfo (short datatyp)
+	idl::RETN* SQLNumResultCols (short & columns)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLFetch (ULONG iRow, ULONG nRow, idl::typRecord_out)
+	idl::RETN* SQLGetTypeInfo (short datatyp)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLFetchRef (ULONG iRow, ULONG nRow, idl::typRecord &)
+	idl::RETN* SQLFetch (ULONG iRow, ULONG nRow, idl::typRecord_out)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLDescribeParams(idl::typParamset& params)
+	idl::RETN* SQLFetchRef (ULONG iRow, ULONG nRow, idl::typRecord &)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLColAttribute
+	idl::RETN* SQLDescribeParams(idl::typParamset& params)
+	throw(::CORBA::SystemException);
+	////-----------------------------------------
+	idl::RETN* SQLColAttribute
 	( CORBA::UShort col
 	, CORBA::UShort attr
 	, idl::typVariant_out value
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------
-	idl::RETN SQLDescribeCol
+	idl::RETN* SQLDescribeCol
 	( CORBA::UShort column
 	, CORBA::String_out name
 	, CORBA::Short_out datatype
@@ -188,19 +181,11 @@ public:
 	, CORBA::Short_out nullable
 	)
 	throw(::CORBA::SystemException);
-	////-----------------------------------------
-	idl::RETN SQLError
-	( CORBA::String_out szSQLState
-	, CORBA::Short_out nNativeError
-	, CORBA::String_out szMessgae
-	)
-	throw(::CORBA::SystemException);
 //	static vector<PortableServer::ObjectId*> ms_aDeleted;
 
 protected:
 	IConnection_impl * m_pDBC;
 	auto_ptr<CTableImpl> m_aTablePtr;
-	CSQLError m_aError;
 };
 //---------------------------------------------------------------------------
 #endif // TPDBLNK_IREMOTE_IMPL_H

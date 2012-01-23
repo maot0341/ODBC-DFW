@@ -41,7 +41,7 @@ SQLGetTypeInfo (SQLHSTMT hstmt, SQLSMALLINT nDataType)
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
 	pStmt->prepare();
-	idl::RETN nRetn = (*pStmt)->SQLGetTypeInfo (nDataType);
+	SQLRETURN nRetn = pStmt->SQLGetTypeInfo (nDataType);
 	return nRetn;
 
 }

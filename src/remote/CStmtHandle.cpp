@@ -71,11 +71,14 @@ void
 CStmtHandle::prepare(const char * szSQL)
 {
 	m_iRecord = 0;
-	m_aError.clear();
+//	m_aError.clear();
 	m_szSQL = szSQL;
 	m_vHeader.length(0);
+	m_vRetn = 0;
+	m_iError = 0;
 }
 //---------------------------------------------------------------------------
+#if 0
 idl::IStmt_ptr
 CStmtHandle::operator->()
 {
@@ -87,6 +90,7 @@ CStmtHandle::operator->()
 //	assert(!CORBA::is_nil (m_aStmtStub));
 //	return m_aStmtStub;
 }
+#endif
 //---------------------------------------------------------------------------
 SQLRETURN
 CStmtHandle::SQLBindCol (int col, short typ, void* val, long len, long *ind)
@@ -127,7 +131,8 @@ CStmtHandle::SQLFetch()
 {
 	if (CORBA::is_nil (m_aStmtStub))
 		return SQL_ERROR;
-	idl::RETN nRetn = SQL_SUCCESS;
+//	idl::RETN nRetn = SQL_SUCCESS;
+	idl::RETN_var vRetn;
 	//ASSUME (m_nRow > 0);
 	const ULONG nCols = cols();
 
@@ -138,15 +143,17 @@ CStmtHandle::SQLFetch()
 	{
 		m_iCache = iRec;
 #if 0
-		nRetn = m_aStmtStub->SQLFetchRef (iRec, nRow, m_vRecord);
+		m_vRetn = m_aStmtStub->SQLFetchRef (iRec, nRow, m_vRecord);
+		m_iError = 0;
 #else
 		idl::typRecord_var vRecord;
-		nRetn = m_aStmtStub->SQLFetch (iRec, nRow, vRecord);
+		m_vRetn = m_aStmtStub->SQLFetch (iRec, nRow, vRecord);
 		m_vRecord = vRecord;
+		m_iError = 0;
 #endif
-		if (nRetn != SQL_SUCCESS)
-		if (nRetn != SQL_SUCCESS_WITH_INFO)
-			return nRetn;
+		if (m_vRetn != SQL_SUCCESS)
+		if (m_vRetn != SQL_SUCCESS_WITH_INFO)
+			return m_vRetn->nRetn;
 	}
 	const ULONG nRows = m_vRecord.length() / nCols;
 	if (m_nCache == 0)
@@ -180,7 +187,7 @@ CStmtHandle::SQLFetch()
 		j = iRow * nCols + i;
 		pLink->write (m_vRecord[j]);
 	}
-	return nRetn;
+	return m_vRetn->nRetn;
 }
 //---------------------------------------------------------------------------
 SQLRETURN
@@ -322,7 +329,8 @@ SQLRETURN
 CStmtHandle::SQLExecute()
 {
 	short i,nParam = m_aAPD.size();
-	m_aStmtStub->SQLDescribeParams (m_aIPD);
+	m_vRetn = m_aStmtStub->SQLDescribeParams (m_aIPD);
+	m_iError = 0;
 	idl::typParamset aAPD (m_aIPD);
 	for (i=0; i<nParam; i++)
 	{
@@ -330,8 +338,11 @@ CStmtHandle::SQLExecute()
 			m_aAPD[i].m_nValueType = m_aIPD[i].m_nValueType;
 		idlcpy (aAPD[i], m_aAPD[i]);
 	}
-	m_aStmtStub->SQLParams (aAPD);
-	return m_aStmtStub->SQLExecute ();
+	m_vRetn = m_aStmtStub->SQLParams (aAPD);
+	m_iError = 0;
+	m_vRetn = m_aStmtStub->SQLExecute ();
+	m_iError = 0;
+	return m_vRetn->nRetn;
 	return SQL_SUCCESS;
 }
 //---------------------------------------------------------------------------
