@@ -36,7 +36,7 @@ CParamImpl::CParamImpl()
 	m_pParameterValuePtr = 0;
 	m_nBufferLength = 0;
 	m_pStrLen_or_IndPtr = 0;
-	m_szValue = 0;
+	*m_szValue = 0;
 }
 //---------------------------------------------------------------------------
 CParamImpl::CParamImpl (const CParamImpl & aParam)
@@ -48,7 +48,7 @@ CParamImpl::CParamImpl (const CParamImpl & aParam)
 	m_pParameterValuePtr = aParam.m_pParameterValuePtr;
 	m_nBufferLength = aParam.m_nBufferLength;
 	m_pStrLen_or_IndPtr = aParam.m_pStrLen_or_IndPtr;
-	m_szValue = 0;
+	*m_szValue = 0;
 }
 //---------------------------------------------------------------------------
 #if 0

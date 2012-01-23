@@ -74,7 +74,6 @@ CDriver::Instance()
 CDriver::CDriver()
 : CHandle(0)
 {
-	m_argv = 0;
 	m_argc = 0;
 	char ** argv = m_argv;
 	int & argc = m_argc;
