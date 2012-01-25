@@ -26,7 +26,10 @@
 
 using namespace std;
 
+#define BIT(i) (1 << (i))
 #define DIM(arr) (sizeof(arr) / sizeof(arr[0]))
+#define NVL(v,n) (((v)==0) ? (n) : (v))
+#define LIMIT(v,g1,g2)  (((v) < (g1)) ? (g1) : ((v) > (g2)) ? g2 : (v))
 #define FIND(v,x) std::find ((v).begin(), (v).end(), x)
 #define CONTAINS(v,x) (std::find ((v).begin(), (v).end(), x) != (v).end())
 //#define STRNVL(s) (s) ? (s) : string()
@@ -36,7 +39,7 @@ namespace stdx
 //---------------------------------------------------------------------------
 #define VSORT(v) if ((v).size() > 1) sort((v).begin(), (v).end())
 //---------------------------------------------------------------------------
-template<class K, class T> 
+template<class K, class T>
 vector<K> keys (const std::map<K,T> & aMap)
 {
 	vector<K> aList;
@@ -44,7 +47,7 @@ vector<K> keys (const std::map<K,T> & aMap)
 	return aList;
 }
 //---------------------------------------------------------------------------
-template<class K, class T> 
+template<class K, class T>
 vector<T> data (const std::map<K,T> & aMap)
 {
 	vector<T> aList;
@@ -52,7 +55,7 @@ vector<T> data (const std::map<K,T> & aMap)
 	return aList;
 }
 //---------------------------------------------------------------------------
-template<class K, class T> 
+template<class K, class T>
 void split (const std::map<K,T> & aMap, vector<K> * pKeys, vector<T> * pData)
 {
 	if (pKeys == 0 && pData == 0)
@@ -75,7 +78,7 @@ void split (const std::map<K,T> & aMap, vector<K> * pKeys, vector<T> * pData)
 	}
 }
 //---------------------------------------------------------------------------
-template<class T> 
+template<class T>
 T format (const char * szFormat, ...)
 {
 	char szBuff[8000];
@@ -92,7 +95,7 @@ STRNUL (const char * s)
 	return s == 0 || *s == 0;
 }
 //---------------------------------------------------------------------------
-inline std::string 
+inline std::string
 STRNVL (const char * s)
 {
 	if (s)

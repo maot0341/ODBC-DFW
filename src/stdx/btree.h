@@ -15,7 +15,7 @@
 
     Änderung  Datum     Autor  Bemerkung
     ------------------------------------------------------------------------------------
-    @1        ??.??.00  ??
+    @1        25.01.2012   jv  Erstellung
 ***************************************************************************************/
 
 #ifndef __STDXBTREE_H__
@@ -96,7 +96,7 @@ short btree<T,K>::compare (const T& v1, const T& v2) const
 }
 //---------------------------------------------------------------------------
 template<class T, short K>
-void 
+void
 btree<T,K>::erase (node * p)
 {
 	if (!p) return;
@@ -109,7 +109,7 @@ btree<T,K>::erase (node * p)
 }
 //---------------------------------------------------------------------------
 template<class T, short K>
-btree<T,K>::node* 
+btree<T,K>::node*
 btree<T,K>::create (const T & v, node * pl, node * pr) const
 {
 	node * p = create();
@@ -125,7 +125,7 @@ btree<T,K>::create (const T & v, node * pl, node * pr) const
 }
 //---------------------------------------------------------------------------
 template<class T, short K>
-btree<T,K>::node* 
+btree<T,K>::node*
 btree<T,K>::create (const T * v, uint n) const
 {
 	const uint n0 = m_nSize;
@@ -172,7 +172,7 @@ void btree<T,K>::insert (node * pNode, uint i, const T & v, node * pLeft, node *
 	T * pd = pNode->data + i;
 	P * pc = pNode->child + i;
 	assert (pNode->count == i || pc[0] == pLeft);
-	short n = pNode->count - i; 
+	short n = pNode->count - i;
 	if (n > 0)
 	{
 		memmove (pd+1, pd, n * sizeof(T));
@@ -270,7 +270,7 @@ void btree<T,K>::insert (node * pNode, const T & v, node* pChildL, node* pChildR
 }
 //---------------------------------------------------------------------------
 template<class T, short K>
-btree<T,K>::node * 
+btree<T,K>::node *
 btree<T,K>::seek (const T & v, uint & i) const
 {
 	node *s, *p = m_pRoot;
