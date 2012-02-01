@@ -95,6 +95,7 @@ SQRT		{ return lSQRT; }
 EXP         { return lEXP; }
 LOG			{ return lLOG; }
 POWER		{ return lEXP; }
+NVL			{ return lNVL; }
 
 FMT			{ return lFMT; }
 

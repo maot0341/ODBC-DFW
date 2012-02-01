@@ -137,8 +137,8 @@ public:
 class CTerm : public CObject
 {
 public:
-	CTerm() : m_paValue(0) {}
-	virtual ~CTerm() {}
+	CTerm();
+	virtual ~CTerm();
 
 	static bool isBool(short);
 	static bool isFloat(short);
@@ -236,7 +236,7 @@ typedef vector<CValue> CRecord;
 class CUnary : public CTerm
 {
 public:
-	CUnary (int head, CTerm *term) : m_nHead(head), m_pTerm(term)  { m_strDebug = id(this);}
+	CUnary (int head, CTerm *term) : m_nHead(head), m_pTerm(term)  { m_strDebug = id(this); }
 	int head() const { return m_nHead; }
 	const CTerm* arg() const { return m_pTerm; }
 	short type() const;
@@ -273,7 +273,7 @@ public:
 protected:
 
 	int m_nHead;
-	std::string  m_strValue;
+	mutable std::string  m_strValue;
 	vector<CTerm*> m_aArgs;
 	double (*m_pNumber)(const vector<CTerm*>&);
 	double (*m_pString)(const vector<CTerm*>&);

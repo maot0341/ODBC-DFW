@@ -296,3 +296,22 @@ void idlcpy (idl::typParam & crbParam, const CParam & aParam)
 	}
 }
 //---------------------------------------------------------------------------
+idl::RETN * IDL (const idl::typException & aExc)
+{
+	idl::RETN_var vRetn = new idl::RETN;
+	vRetn->nRetn = aExc.nRetn;
+	ULONG i,n = aExc.aDiag.length();
+	vRetn->aDiag.length(n);
+	for (i=0; i<n; i++)
+	{
+		idl::typDiagItem & raDst = vRetn->aDiag[i];
+		const idl::typDiagItem & aSrc = aExc.aDiag[i];
+		strncpy (raDst.SQLState, aSrc.SQLState, 6);
+		raDst.nError = aSrc.nError;
+		raDst.strError = CORBA::string_dup (aSrc.strError);
+		raDst.strFile = CORBA::string_dup (aSrc.strFile);
+		raDst.nLine = aSrc.nLine;
+	}
+	return vRetn._retn();
+}
+//---------------------------------------------------------------------------

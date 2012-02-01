@@ -151,6 +151,11 @@ module idl
 	//// RETRUN
 	////-----------------------------------------
 	//typedef short RETN;
+	exception typException
+	{
+		short nRetn;
+		typDiagSeq aDiag;
+	};
 	struct RETN
 	{
 		short nRetn;
@@ -222,7 +227,7 @@ module idl
 		RETN SQLExecute ();
 		RETN SQLNumResultCols (out short columns);
 		RETN SQLGetTypeInfo (in short datatyp);
-		RETN SQLFetch (in ULONG iRow, in ULONG nRow, out typRecord record);
+		RETN SQLFetch (in ULONG iRow, in ULONG nRow, out typRecord record) raises (typException);
 		RETN SQLDescribeParams (inout typParamset params);
 
 		// faster then (out typRecord record)

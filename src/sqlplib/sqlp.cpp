@@ -24,6 +24,7 @@
 #include "desc.h"
 #include "tableset.h"
 #include "resultset.h"
+#include "function.h"
 #include <stdx/debug.h>
 #include <stdx/utils.h>
 
@@ -307,9 +308,9 @@ string id(const CObject* pObject)
 		if (CTerm::isString (nType))
 			sprintf (sz, "'%s'", pValue->asString());
 		else if (CTerm::isNumber (nType))
-			sprintf (sz, "%lf", pValue->asDouble());
+			sprintf (sz, "%lg", pValue->asDouble());
 		else
-			ASSUME (false);
+			strcpy (sz, "val");
 		return string(sz);
 	}
 	const CUnary * pUnary = dynamic_cast<const CUnary*>(pObject);
@@ -343,6 +344,8 @@ string id(const CObject* pObject)
 			sprintf (sz, "%s(%s)", szFunc, szTerm);
 		else if (szOrder)
 			sprintf (sz, "%s %s", szTerm, szOrder);
+		else if (nHead == '/')
+			sprintf (sz, "1/%s", szTerm);
 		else if (ispunct (nHead))
 			sprintf (sz, "%c%s", (char)nHead, szTerm);
 		else
@@ -372,7 +375,7 @@ string id(const CObject* pObject)
 		: nHead == lNEQ ? " <> "
 		: nHead == lLEQ ? " <= "
 		: nHead == lGEQ ? " >= "
-		: nHead == NULL ? ","
+		: nHead == lNULL ? ","
 		: 0;
 		if (szFunc)
 		{
@@ -641,6 +644,17 @@ void format (vector<CValue> & aRecord, const vector<CTerm*> & aTerms)
 	}
 }
 //---------------------------------------------------------------------------
+// CTerm
+//---------------------------------------------------------------------------
+CTerm::CTerm()
+{
+	m_paValue = 0;
+}
+//---------------------------------------------------------------------------
+CTerm::~CTerm()
+{
+}
+//---------------------------------------------------------------------------
 bool
 CTerm::isString (short nType)
 {
@@ -767,6 +781,7 @@ CValue::CValue (short t)
 	m_dNumber = 0;
 	m_pString = 0;
 	m_nString = 0;
+	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (short t, double val)
@@ -776,6 +791,7 @@ CValue::CValue (short t, double val)
 	m_dNumber = val;
 	m_pString = 0;
 	m_nString = 0;
+	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (const char * val)
@@ -784,6 +800,7 @@ CValue::CValue (const char * val)
 	m_pString = 0;
 	m_nString = 0;
 	set (SQL_CHAR, val);
+	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (const CTerm & val)
@@ -792,6 +809,7 @@ CValue::CValue (const CTerm & val)
 	m_pString = 0;
 	m_nString = 0;
 	operator= (val);
+	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::~CValue()
@@ -1058,7 +1076,8 @@ CUnary::asDouble() const
 		return -dValue;
 	if (m_nHead == '/')
 	{
-		ASSUME (dValue);
+		if (!dValue)
+			throw EXC("22012", 22012, "Division by zero");
 		return 1/dValue;
 	}
 /*
@@ -1143,7 +1162,7 @@ CFunction::CFunction (int nHead, const vector<CTerm*> & aArgs)
 : m_nHead(nHead)
 , m_aArgs(aArgs)
 {
-	m_strDebug = id(this);
+	m_strDebug = id(this); 
 }
 //---------------------------------------------------------------------------
 CFunction::CFunction (int nHead, va_list & aArgs)
@@ -1157,7 +1176,7 @@ CFunction::CFunction (int nHead, va_list & aArgs)
 		m_aArgs.push_back(pTerm);
 		//arg (pTerm);
 	}
-	m_strDebug = id(this);
+	m_strDebug = id(this); 
 }
 //---------------------------------------------------------------------------
 CFunction::~CFunction ()
@@ -1245,6 +1264,7 @@ CFunction::isNull() const
 double
 CFunction::asDouble() const
 {
+	throw EXC("42S22", 900, "double?!: [%s] (not implemented).", m_strDebug.c_str());
 	const CTerm * pTerm;
 	const ULONG nArgs = m_aArgs.size();
 	assert (nArgs);
@@ -1537,6 +1557,7 @@ CFunction::asDouble() const
 const char *
 CFunction::asString() const
 {
+	throw EXC("42S22", 900, "string?!: [%s] (not implemented).", m_strDebug.c_str());
 	string & strValue = const_cast<CFunction*>(this)->m_strValue;
 	strValue.erase();
 	if (m_nHead == lFMT)
@@ -1581,8 +1602,8 @@ CColumn::CColumn (const char * t, const char * c)
 { 
 	m_szTable=t;
 	m_szColumn=c;
-	m_strDebug = id(this); 
 	m_pTable = 0;
+	m_strDebug = id(this); 
 }
 //---------------------------------------------------------------------------
 string
@@ -2096,6 +2117,7 @@ CStatement::func (int nHead, va_list args)
 	vector<CTerm*> aArgs;
 	aArgs.clear();
 	aArgs.reserve(2);
+	//// flatten arg-list a,(b,c) ==> (a,b,c)
 	while(true)
 	{
 		CTerm * pTerm = va_arg (args, CTerm*);
@@ -2111,7 +2133,7 @@ CStatement::func (int nHead, va_list args)
 		else
 			aArgs.push_back (pTerm);
 	}
-
+	//// lookup (fuction allready defined)
 	vector<CObject*>::iterator iObject = m_aMemory.begin();
 	for (; iObject!=m_aMemory.end(); iObject++)
 	{
@@ -2135,9 +2157,73 @@ CStatement::func (int nHead, va_list args)
 			continue;
 		return pFunc;
 	}
-	CFunction * pFunc = new CFunction (nHead, aArgs);
+	CFunction * pFunc = 0;
+	switch (nHead)
+	{
+	case '+':
+		pFunc = new CFunc<'+'>(aArgs);
+		break;
+	case '*':
+		pFunc = new CFunc<'*'>(aArgs);
+		break;
+	case lMOD:
+		pFunc = new CFunc<lMOD>(aArgs);
+		break;
+	case lDIV:
+		pFunc = new CFunc<lDIV>(aArgs);
+		break;
+	case lEXP:
+		pFunc = new CFunc<lEXP>(aArgs);
+		break;
+	case lLOG:
+		pFunc = new CFunc<lLOG>(aArgs);
+		break;
+	case '=':
+		pFunc = new CFunc<'='>(aArgs);
+		break;
+	case '<':
+		pFunc = new CFunc<'<'>(aArgs);
+		break;
+	case '>':
+		pFunc = new CFunc<'>'>(aArgs);
+		break;
+	case lNEQ:
+		pFunc = new CFunc<lNEQ>(aArgs);
+		break;
+	case lLEQ:
+		pFunc = new CFunc<lLEQ>(aArgs);
+		break;
+	case lGEQ:
+		pFunc = new CFunc<lGEQ>(aArgs);
+		break;
+	case lAND:
+		pFunc = new CFunc<lAND>(aArgs);
+		break;
+	case lOR:
+		pFunc = new CFunc<lOR>(aArgs);
+		break;
+	case lBETWEEN:
+		pFunc = new CFunc<lBETWEEN>(aArgs);
+		break;
+	case lIN:
+		pFunc = new CFunc<lIN>(aArgs);
+		break;
+	case lMIN:
+		pFunc = new CFunc<lMIN>(aArgs);
+		break;
+	case lMAX:
+		pFunc = new CFunc<lMAX>(aArgs);
+		break;
+	case lFMT:
+		pFunc = new CFunc<lFMT>(aArgs);
+		break;
+	case lNVL:
+		pFunc = new CFunc<lNVL>(aArgs);
+		break;
+	default:
+		pFunc = new CFunction (nHead, aArgs);
+	}
 	ASSUME (pFunc);
-	string mist = sqlp::id (pFunc);
 	m_aMemory.push_back (pFunc);
 	return pFunc;
 }

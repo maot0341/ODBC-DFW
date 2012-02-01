@@ -103,7 +103,7 @@ using namespace sqlp;
 %token lNULL lIS lLIKE lIN lBETWEEN
 %token lTIMESTAMP lDATE lTIME
 %token lINSERT lINTO lVALUES lUPDATE lSET lDELETE
-%token lNEQ lLEQ lGEQ lMOD lDIV lLEN
+%token lNEQ lLEQ lGEQ lMOD lDIV lLEN lNVL
 
 %token lTRANSFORM lPIVOT
 
@@ -312,7 +312,9 @@ y_term
 	| lMIN '(' y_term ',' y_term_list ')'	{ $$ = func(lMIN, $3, $5, 0); } 
 	| lMAX '(' y_term ',' y_term_list ')'	{ $$ = func(lMAX, $3, $5, 0); } 
 	| lLEN '(' y_term  ')'		            { $$ = unary (lLEN, $3); } 
+	| lNVL '(' y_term ',' y_term ')'		{ $$ = func(lNVL, $3, $5, 0); } 
 	| y_aggr
+	| y_bool
 	;
 	
 y_term_list
@@ -414,7 +416,6 @@ func (int nHead, ...)
 	va_list aArgs;
 	va_start (aArgs, nHead);
 	CFunction * pTerm = m_stmt->func (nHead, aArgs);
-	std::string mist = id (pTerm);
 	va_end (aArgs);
 	return pTerm;
 }

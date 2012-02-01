@@ -43,5 +43,7 @@ void idlcpy (const idl::typVariant& vValue, long* pValue);
 void idlcpy (const idl::typVariant& vValue, void* pValue, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen);
 
 void idlcpy (idl::typParam &, const CParam & );
+
+idl::RETN * IDL (const idl::typException &);
 //---------------------------------------------------------------------------
 #endif

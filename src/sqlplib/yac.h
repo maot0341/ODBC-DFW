@@ -29,6 +29,8 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
      lCMD = 258,
      lNAME = 259,
      lSTRING = 260,
@@ -92,12 +94,13 @@
      lLEQ = 318,
      lGEQ = 319,
      lLEN = 320,
-     lTRANSFORM = 321,
-     lPIVOT = 322,
-     lOR = 323,
-     lAND = 324,
-     lNOT = 325,
-     lUMINUS = 326
+     lNVL = 321,
+     lTRANSFORM = 322,
+     lPIVOT = 323,
+     lOR = 324,
+     lAND = 325,
+     lNOT = 326,
+     lUMINUS = 327
    };
 #endif
 

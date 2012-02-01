@@ -22,6 +22,7 @@
 #define __UTILS_H__
 
 #include <vector>
+#include <string>
 #include <map>
 
 using namespace std;

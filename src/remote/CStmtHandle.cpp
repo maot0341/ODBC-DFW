@@ -140,6 +140,7 @@ CStmtHandle::SQLFetch()
 	const ULONG nRow = m_nCache;
 	const ULONG iRow = (nRow) ? iRec % nRow : 0;
 	if (iRow == 0)
+	try
 	{
 		m_iCache = iRec;
 #if 0
@@ -154,6 +155,15 @@ CStmtHandle::SQLFetch()
 		if (m_vRetn != SQL_SUCCESS)
 		if (m_vRetn != SQL_SUCCESS_WITH_INFO)
 			return m_vRetn->nRetn;
+	}
+	catch (const idl::typException & aExc)
+	{
+		m_vRetn = IDL (aExc);
+	}
+	catch (const CORBA::UserException & aExc)
+	{
+		int i = 2;
+		i++;
 	}
 	const ULONG nRows = m_vRecord.length() / nCols;
 	if (m_nCache == 0)

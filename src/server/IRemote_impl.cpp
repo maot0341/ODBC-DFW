@@ -242,6 +242,8 @@ IStmt_impl::RETN (short nRetn, const CException * pExc)
 	raDiag.nError = pExc->nId;
 	strncpy (raDiag.SQLState, pExc->szState , 6);
 	raDiag.strError = (const char*)pExc->strText.c_str();
+	raDiag.strFile = (const char*)pExc->szFile;
+	raDiag.nLine = pExc->nLine;
 	return pRetn;
 }
 //---------------------------------------------------------------------------
@@ -407,20 +409,38 @@ idl::RETN*
 IStmt_impl::SQLFetch (ULONG iRow, ULONG nRow, idl::typRecord_out pRecord)
 throw(::CORBA::SystemException)
 {
-	ta = time(0);
-	pRecord = new idl::typRecord;
-	assert (pRecord != 0);
-	CTableImpl * pTable = m_aTablePtr.get();
-	if (!pTable)
-		return RETN (SQL_INVALID_HANDLE);
-	if (nRow == 0)
-		nRow = pTable->rows();
-	if (!pTable->read (iRow, nRow, *pRecord))
-		return RETN (SQL_NO_DATA);
-	time_t te = time(0);
-	time_t td = te - ta;
-//	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
+	try
+	{
+		ta = time(0);
+		pRecord = new idl::typRecord;
+		assert (pRecord != 0);
+		CTableImpl * pTable = m_aTablePtr.get();
+		if (!pTable)
+			return RETN (SQL_INVALID_HANDLE);
+		if (nRow == 0)
+			nRow = pTable->rows();
+		if (!pTable->read (iRow, nRow, *pRecord))
+			return RETN (SQL_NO_DATA);
+		time_t te = time(0);
+		time_t td = te - ta;
+	//	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
+	}
+	catch (const CException & aErr)
+	{
+		throw IDLException (SQL_ERROR, aErr);
+	}
+	catch (const string & strErr)
+	{
+		throw IDLException (SQL_ERROR, EXC("42000", 900, strErr.c_str()));
+//		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
+	}
+	catch (...)
+	{
+		throw IDLException (SQL_ERROR, EXC("42000", 900, "Syntax error or access violation"));
+//		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
+	}
 	return RETN (SQL_SUCCESS);
+
 }
 //---------------------------------------------------------------------------
 idl::RETN*
