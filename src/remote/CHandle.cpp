@@ -31,7 +31,7 @@ CHandle::CHandle (CHandle * paParent)
 	if (paParent)
 		paParent->m_aChildList.push_back (this);
 	m_paParent = paParent;
-	m_iError = 0;
+	m_iDiag = 0;
 }
 //---------------------------------------------------------------------------
 CHandle::~CHandle()
@@ -55,18 +55,64 @@ void CHandle::clear()
 	m_vRetn = 0;
 }
 //---------------------------------------------------------------------------
-void CHandle::error (const CSQLException & aExc)
+void CHandle::state (const idl::typDiagItem & aItem)
 {
 	if (m_vRetn == 0)
 		m_vRetn = new idl::RETN;
-	idl::typDiagSeq & raList = m_vRetn->aDiag;
-	int i = raList.length();
-	raList.length (i+1);
-	idl::typDiagItem & raDiag = raList[i];
-	strncpy (raDiag.SQLState, aExc.state(), 6);
-	raDiag.nError = aExc.code();
-	raDiag.strError = aExc.text();
-
+	idl::typDiagSeq & raDiag = m_vRetn->aDiag;
+	raDiag.length (1);
+	raDiag[0] = aItem;
+	m_iDiag = 0;
+}
+//---------------------------------------------------------------------------
+void CHandle::state (const idl::typDiagSeq & aList)
+{
+	if (m_vRetn == 0)
+		m_vRetn = new idl::RETN;
+	int i,n = aList.length();
+	idl::typDiagSeq & raDiag = m_vRetn->aDiag;
+	raDiag.length (n);
+	for (i=0; i<n; i++)
+		raDiag[i] = aList[i];
+	m_iDiag = 0;
+}
+//---------------------------------------------------------------------------
+short CHandle::RETN (idl::RETN * ret)
+{	
+	m_iDiag = 0; 
+	m_vRetn = ret;
+	return ret ? ret->nRetn : SQL_SUCCESS;
+}
+//---------------------------------------------------------------------------
+short CHandle::RETN (const idl::typException & aExc)
+{	
+	m_iDiag = 0; 
+	m_vRetn = new idl::RETN;
+	m_vRetn->nRetn = SQL_ERROR;
+	ULONG i,n = aExc.aDiag.length();
+	m_vRetn->aDiag.length(n);
+	for (i=0; i<n; i++)
+	{
+		idl::typDiagItem & raDst = m_vRetn->aDiag[i];
+		const idl::typDiagItem & aSrc = aExc.aDiag[i];
+		strncpy (raDst.szState, aSrc.szState, 6);
+		raDst.nCode = aSrc.nCode;
+		raDst.strText = CORBA::string_dup (aSrc.strText);
+		raDst.strFile = CORBA::string_dup (aSrc.strFile);
+		raDst.nLine = aSrc.nLine;
+	}
+	return m_vRetn->nRetn;
+}
+//---------------------------------------------------------------------------
+short CHandle::RETN (const ::CORBA::Exception& aExc, const char * szFile, long nLine)
+{	
+	CDebugInfo aDebug(szFile,nLine);
+	m_iDiag = 0; 
+	m_vRetn = new idl::RETN;
+	m_vRetn->nRetn = SQL_ERROR;
+	m_vRetn->aDiag.length(1);
+	m_vRetn->aDiag[0] = aDebug.create ("08S01", 1999, aExc._to_string());
+	return m_vRetn->nRetn;
 }
 //---------------------------------------------------------------------------
 SQLRETURN 
@@ -76,22 +122,23 @@ CHandle::SQLError (CORBA::String_var & crbState, CORBA::Short &crbErrorCode, COR
 		return SQL_NO_DATA;
 	const idl::typDiagSeq & aList = m_vRetn->aDiag;
 	int nList = aList.length();
-	if (m_iError >= nList)
+	if (m_iDiag >= nList)
 		return SQL_NO_DATA;
-	const idl::typDiagItem & aDiag = aList[m_iError++];
-	const char * szText = aDiag.strError;
-	const char * szState = aDiag.SQLState;
+	const idl::typDiagItem & aDiag = aList[m_iDiag++];
+	const char * szText = aDiag.strText;
+	const char * szState = aDiag.szState;
 	crbState = szState;
 	crbMessage = szText;
-	crbErrorCode = aDiag.nError;
+	crbErrorCode = aDiag.nCode;
 	return SQL_SUCCESS;
 }
 //---------------------------------------------------------------------------
 // DRIVER
 //---------------------------------------------------------------------------
 HINSTANCE CDriver::ms_hInstance = 0;
-auto_ptr<CDriver> CDriver::ms_aInstance;
 //---------------------------------------------------------------------------
+#ifndef JV_DBG
+auto_ptr<CDriver> CDriver::ms_aInstance;
 CDriver *
 CDriver::Instance()
 {
@@ -103,6 +150,19 @@ CDriver::Instance()
 	ms_aInstance = auto_ptr<CDriver>(pDriver);
 	return pDriver;
 }
+//---------------------------------------------------------------------------
+#else
+CDriver* CDriver::ms_pInstance = 0;
+CDriver *
+CDriver::Instance()
+{
+	if (ms_pInstance)
+		return ms_pInstance;
+	ms_pInstance = new CDriver();
+	assert (ms_pInstance);
+	return ms_pInstance;
+}
+#endif 
 //---------------------------------------------------------------------------
 CDriver::CDriver()
 : CHandle(0)

@@ -62,10 +62,17 @@ SQLAllocEnv (SQLHENV * phenv)
 SQLRETURN  SQL_API 
 SQLAllocConnect (SQLHENV henv, SQLHDBC* phdbc)
 {
-	TRY ("SQLAllocConnect");
+	TRACELN("SQLAllocConnect");
+	try
+	{
 	CEnvironment * paEnv = (CEnvironment*)henv;
-	if (!phdbc || !paEnv)
+	if (!paEnv)
 		return SQL_INVALID_HANDLE;
+	if (!phdbc)
+	{
+		paEnv->state (EXC("aaaaa", 1234, "hdbc: invalid pointer"));
+		return SQL_INVALID_HANDLE;
+	}
 	CDatabase * pDatabase = new CDatabase (paEnv);
 	assert (pDatabase);
 	*phdbc = (SQLHDBC) pDatabase;
@@ -101,28 +108,10 @@ SQLBindCol (SQLHSTMT hstmt
 )
 {
 	//TRACELN ("SQLBindCol");
-	try {
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
-#if 0
 	return pStmt->SQLBindCol (nCol, nTargetTyp, pTargetVal, nTargetLen, pnTargetInd);
-#else
-	vector<CTarget> & raTarget = pStmt->m_aTarget;
-	const int nTarget = raTarget.size();
-	if (nTarget < nCol)
-		raTarget.resize (nCol);
-	const int i = nCol - 1;
-	CTarget & raField = raTarget[i];
-	raField.nCol = nCol;
-	raField.nTyp = nTargetTyp;
-	raField.pVal = static_cast<char*>(pTargetVal);
-	raField.nLen = nTargetLen;
-	raField.pInd = pnTargetInd;
-#endif
-	return SQL_SUCCESS;
-	EXCEPTION(hstmt);
-	return SQL_ERROR;
 }
 //---------------------------------------------------------------------------
 SQLRETURN  SQL_API 
@@ -417,21 +406,7 @@ SQLFetch (SQLHSTMT hstmt)
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
-#if 1
 	SQLRETURN nRetn = pStmt->SQLFetch();
-#else	
-	idl::typRecord_var vRecord;
-	idl::RETN nRetn = (*pStmt)->SQLFetch (vRecord);
-	vector<CTarget> & raTarget = pStmt->m_aTarget;
-	const int nTarget = raTarget.size();
-	int i;
-	if (nRetn == SQL_SUCCESS)
-	for (i=0; i<nTarget; i++)
-	{
-		CTarget & raField = raTarget[i];
-		idlcpy (vRecord[i], raField.nTyp, raField.pVal, raField.nLen, raField.pInd);
-	}
-#endif
 	return nRetn;
 	EXCEPTION (hstmt);
 	return SQL_ERROR;

@@ -76,7 +76,7 @@ const char * CFunc<T>::asString() const
 	return 0;
 }
 //---------------------------------------------------------------------------
-// Numeric Functions
+// Functions (Implementation)
 //---------------------------------------------------------------------------
 inline double
 CFunc<'+'>::asDouble() const
@@ -99,6 +99,21 @@ CFunc<'+'>::asDouble() const
 		nValue++;
 	}
 	return dValue;
+}
+//---------------------------------------------------------------------------
+inline const char *
+CFunc<'+'>::asString() const
+{
+	const vector<CTerm*> & aArgs = args();
+	vector<CTerm*>::const_iterator iTerm = aArgs.begin();
+	vector<CTerm*>::const_iterator iEnd = aArgs.end();
+	for (m_strValue.erase(); iTerm != iEnd; iTerm++)
+	{
+		CTerm* pTerm = *iTerm;
+		ASSUME (pTerm);
+		m_strValue += pTerm->asString();
+	}
+	return m_strValue.c_str();
 }
 //---------------------------------------------------------------------------
 inline double
@@ -472,21 +487,6 @@ CFunc<lFMT>::asString() const
 	ASSUME (pFormat && pTerm);
 	const char * szFormat = pFormat->asString();
 	m_strValue = stringf (szFormat, pTerm);
-	return m_strValue.c_str();
-}
-//---------------------------------------------------------------------------
-inline const char *
-CFunc<'+'>::asString() const
-{
-	const vector<CTerm*> & aArgs = args();
-	vector<CTerm*>::const_iterator iTerm = aArgs.begin();
-	vector<CTerm*>::const_iterator iEnd = aArgs.end();
-	for (m_strValue.erase(); iTerm != iEnd; iTerm++)
-	{
-		CTerm* pTerm = *iTerm;
-		ASSUME (pTerm);
-		m_strValue += pTerm->asString();
-	}
 	return m_strValue.c_str();
 }
 //---------------------------------------------------------------------------

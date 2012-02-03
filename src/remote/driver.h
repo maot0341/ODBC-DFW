@@ -40,32 +40,6 @@
 //#define _WINSOCKAPI_
 
 //---------------------------------------------------------------------------
-// exception handling
-//---------------------------------------------------------------------------
-#define TRY(s) try { if (s) TRACELN(s)
-//#define TRY(s) try {
-#define EXCEPTION(h) \
-	} \
-	catch (const CSQLException & aExc) \
-	{ \
-		CHandle * p = static_cast<CHandle*>(h); \
-		if (p) p->error (aExc); \
-	} \
-	catch (const std::string & strError) \
-	{ \
-		TRACELN (strError.c_str()); \
-	} \
-	catch (const ::CORBA::Exception& aExc) \
-	{ \
-		CHandle * p = static_cast<CHandle*>(h); \
-		if (p) p->error (EXC("08S01", 1999, aExc._to_string())); \
-		const char * szText = aExc._to_string(); \
-		TRACELN (szText); \
-	} \
-	catch (...) \
-	{ \
-	}
-
 using namespace std;
 //---------------------------------------------------------------------------
 #define SQLAssign(p,v) if (p) (*(p)) = (v)

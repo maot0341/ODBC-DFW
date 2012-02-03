@@ -21,6 +21,7 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include <windows.h>
 #include <vector>
 //#include "sqlp.h"
 
@@ -36,6 +37,9 @@ vector<ULONG> & operator |= (vector<ULONG> & i1, const vector<ULONG> & i2);
 vector<ULONG> & append (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
 vector<ULONG> & remove (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
 vector<ULONG> & insert (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
+
+vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i, ULONG n);
+vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i);
 
 vector<ULONG> any2sub (const vector<ULONG> &);
 vector<ULONG> idx2sub (const vector<ULONG> &);

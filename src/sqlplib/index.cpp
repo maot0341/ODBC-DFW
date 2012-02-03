@@ -19,10 +19,10 @@
 ***************************************************************************************/
 #pragma warning (disable:4786)
 
-#include <assert.h>
-#include "yac.h"
-#include "sqlp.h"
 #include "index.h"
+#include "sqlp.h"
+#include "yac.h"
+#include <assert.h>
 
 using namespace std;
 namespace idx {
@@ -168,6 +168,22 @@ vector<ULONG> & append (vector<ULONG> & raIndex, ULONG i, ULONG n)
 	}
 	raIndex.push_back (i);
 	raIndex.push_back (j);
+	return raIndex;
+}
+//---------------------------------------------------------------------------
+vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i, ULONG n)
+{
+	raIndex.clear();
+	raIndex.push_back (i);
+	raIndex.push_back (n);
+	return raIndex;
+}
+//---------------------------------------------------------------------------
+vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i)
+{
+	raIndex.clear();
+	raIndex.push_back (i);
+	raIndex.push_back (i+1);
 	return raIndex;
 }
 //---------------------------------------------------------------------------

@@ -123,8 +123,9 @@ column1 (const char * szTable, CTerm * pTerm)
 	CColumn * pColumn = dynamic_cast<CColumn*>(pTerm);
 	if (!pColumn)
 		return 0;
-	if (pColumn->table())
-	if (stricmp (pColumn->table(), szTable))
+	const char * szName = pColumn->table();
+	if (szName)
+	if (stricmp (szName, szTable))
 		return 0;
 	return pColumn->column();
 }
@@ -140,7 +141,7 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 	if (pFunc)
 	{
 		int nHead = pFunc->head();
-		if (pFunc->isComparison())
+		if (pFunc->isRelation())
 //		if (nHead == '=')
 		{
 			CDomain  d0(aDomain);
@@ -149,24 +150,44 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 			CTerm * t1 = pFunc->arg(1);
 			assert (t0);
 			assert (t1);
+			ULONG nRows = pTable->rows();
+			ULONG nCols = pTable->cols();
 //			CColumn * c0 = dynamic_cast<CColumn*>(t0);
 //			CColumn * c1 = dynamic_cast<CColumn*>(t1);
 			const char * c0 = column1 (szTable, t0);
 			const char * c1 = column1 (szTable, t1);
-			cond_t e0 = Condition(t0, d0);
-			cond_t e1 = Condition(t1, d0);
+			const cond_t e0 = Condition(t0, d0);
+			const cond_t e1 = Condition(t1, d0);
+			const char * cf = 0;
+			CTerm * tf = 0;
 			if (c0 && e0 == CondUNDEF && e1 != CondUNDEF)
-			if (pTable->get (aIndex, nHead, c0, t1))
 			{
-				return aIndex;
+				cf = c0;
+				tf = t1;
 			}
 			if (c1 && e1 == CondUNDEF && e0 != CondUNDEF)
-			if (pTable->get (aIndex, nHead, c1, t0))
+			{
+				cf = c1;
+				tf = t0;
+			}
+			if (pTable->get (aIndex, nHead, cf, tf))
 			{
 				return aIndex;
 			}
-			ULONG nRows = pTable->rows();
-			idx::append (aIndex, 0, nRows);
+			if (nHead == lNEQ || nHead == lLEQ || nHead == lGEQ)
+			if (pTable->get (aIndex, '=', cf, tf))
+			{			
+				vector<ULONG> aSub;
+				if (nHead == lNEQ)
+					return idx::invert (aIndex, nRows);
+				if (nHead == lLEQ)
+				if (pTable->get (aSub, '<', cf, tf))
+					return aIndex |= aSub;
+				if (nHead == lGEQ)
+				if (pTable->get (aSub, '>', cf, tf))
+					return aIndex |= aSub;
+			}
+			idx::assigne (aIndex, 0, nRows);
 			return aIndex;
 		}
 		if (nHead == lIN)
@@ -221,6 +242,7 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 				else
 					aIndex &= aItem;
 			}
+			return aIndex;
 		}
 		if (nHead == lOR)
 		{
@@ -234,9 +256,10 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 				else
 					aIndex |= aItem;
 			}
+			return aIndex;
 		}
 	}
-	return aIndex;
+	return idx::assigne (aIndex, 0, pTable->rows());
 }
 //---------------------------------------------------------------------------
 // table-reference - item
@@ -685,6 +708,7 @@ bool CTableSet::zero (long i)
 		pItem->i = 0;
 		pItem->ss = pItem->s0;
 		if (m_pFilter)
+		if (pItem != m_aItems.back())
 			pItem->ss &= filter1 (pItem->name, pItem->table, m_pFilter, pItem->domain);
 		pItem->iter.assign (pItem->ss);
 		if (!fetch (*pItem, pItem->domain))

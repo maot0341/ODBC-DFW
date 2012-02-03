@@ -23,12 +23,13 @@
 
 #include <OB/CORBA.h>
 #include <idl/IRemote_idl.h>
+#include "SQLException.h"
+#include "CParam.h"
 
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
 #include <string>
-#include "CParam.h"
 
 
 using namespace std;
@@ -42,8 +43,9 @@ void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd);
 void idlcpy (const idl::typVariant& vValue, long* pValue);
 void idlcpy (const idl::typVariant& vValue, void* pValue, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen);
 
-void idlcpy (idl::typParam &, const CParam & );
+void idlcpy (idl::typParam &, const CParam &);
 
-idl::RETN * IDL (const idl::typException &);
+//idl::RETN * IDL (const idl::typException &);
+//idl::RETN * IDL (const ::CORBA::Exception &);
 //---------------------------------------------------------------------------
 #endif

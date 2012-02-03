@@ -49,7 +49,7 @@ void idlcpy (CValue &, const idl::typValue &);
 void idlcpy (CParam &, const idl::typParam &);
 //idl::typTerm IDL (sqlp::term_t);
 
-idl::typException IDLException (short nRetn, const CException &);
+idl::typException IDL (const CException &);
 //---------------------------------------------------------------------------
 #if 0
 void idlcpy (const idl::typVariant & vValue, short nType, void* pValue, long nLen, long * pInd);

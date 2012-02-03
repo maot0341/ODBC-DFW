@@ -39,6 +39,46 @@ class CDriverDB;
 class CStmtHandle;
 class CLink;
 
+//#define JV_DBG 1
+//---------------------------------------------------------------------------
+// exception handling
+//---------------------------------------------------------------------------
+#define TRY(s) try { if (s) TRACELN(s)
+//#define TRY(s) try {
+#define EXCEPTION(h) \
+	} \
+	catch (const idl::typException & aExc) \
+	{ \
+		CHandle * p = static_cast<CHandle*>(h); \
+		if (p) p->state (aExc.aDiag); \
+	}\
+	catch (const idl::typDiagItem & aExc) \
+	{ \
+		CHandle * p = static_cast<CHandle*>(h); \
+		if (p) p->state (aExc); \
+	} \
+	catch (const std::string & strText) \
+	{ \
+		const char * szText = strText.c_str(); \
+		CHandle * p = static_cast<CHandle*>(h); \
+		if (p) p->state (EXC("08S01", 1999, szText)); \
+		TRACELN (szText); \
+	} \
+	catch (const ::CORBA::Exception& aExc) \
+	{ \
+		const char * szText = aExc._to_string(); \
+		CHandle * p = static_cast<CHandle*>(h); \
+		if (p) p->state (EXC("08S01", 1999, szText)); \
+		TRACELN (szText); \
+	} \
+	catch (...) \
+	{ \
+		const char * szText = "unknown exception!"; \
+		CHandle * p = static_cast<CHandle*>(h); \
+		if (p) p->state (EXC("08S01", 1999, szText)); \
+		TRACELN (szText); \
+	} \
+
 //---------------------------------------------------------------------------
 // HANDLE
 //---------------------------------------------------------------------------
@@ -48,16 +88,27 @@ public:
 	CHandle (CHandle * parent);
 	virtual ~CHandle();
 	void clear();
-	void error (const CSQLException & exc);
+	void state (const idl::typDiagItem &);
+	void state (const idl::typDiagSeq &);
 
 	SQLRETURN SQLError (CORBA::String_var & crbState, CORBA::Short &crbErrorCode, CORBA::String_var & crbMessage);
+	short RETN() const                            
+	{ 
+		return (&m_vRetn == 0) ? SQL_SUCCESS : m_vRetn->nRetn; 
+	}
+
+	short RETN (idl::RETN * ret);
+	short RETN (const idl::typException & aExc);
+	short RETN (const ::CORBA::Exception& aExc, const char * file, long line);
+
+
+protected:
 	CHandle * m_paParent;
 	std::list<CHandle*> m_aChildList;
-	idl::RETN_var m_vRetn;
-	short RETN() const { return (&m_vRetn == 0) ? SQL_SUCCESS : m_vRetn->nRetn; }
 
-//	CSQLError m_aError;
-	int m_iError;
+private:
+	idl::RETN_var m_vRetn;
+	int m_iDiag;
 };
 //---------------------------------------------------------------------------
 // DRIVER
@@ -77,7 +128,11 @@ public:
 protected:
 	CDriver();
 
+#ifndef JV_DBG
 	static auto_ptr<CDriver> ms_aInstance;
+#else
+	static CDriver* ms_pInstance;
+#endif
 	char * m_argv[99];
 	int m_argc;
 	CORBA::ORB_var m_orb;

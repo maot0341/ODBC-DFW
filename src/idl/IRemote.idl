@@ -140,9 +140,9 @@ module idl
 	////-----------------------------------------
 	struct typDiagItem
 	{
-		char SQLState[6];
-		long nError;
-		string strError;
+		char szState[6];
+		long nCode;
+		string strText;
 		string strFile;
 		long nLine;
 	};
@@ -151,14 +151,16 @@ module idl
 	//// RETRUN
 	////-----------------------------------------
 	//typedef short RETN;
-	exception typException
+	struct RETN
 	{
 		short nRetn;
 		typDiagSeq aDiag;
 	};
-	struct RETN
+	////-----------------------------------------
+	//// EXCEPTION
+	////-----------------------------------------
+	exception typException
 	{
-		short nRetn;
 		typDiagSeq aDiag;
 	};
 	////-----------------------------------------

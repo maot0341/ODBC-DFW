@@ -64,6 +64,7 @@ CSQLColumns::CSQLColumns (const char * szCatalog
 	auto_ptr<CSQLTables> aTables = auto_ptr<CSQLTables>(pDatabase->SQLTables (szCatalog, szSchema, szTable, "TABLE"));
 	const int nRows = aTables->rows();
 	auto_ptr<CTable> aTablePtr;
+	CSQLGetTypeInfo aSQLTypeInfo (SQL_ALL_TYPES);
 	for (i=0; i<nRows; i++)
 	{
 		record_t aRecord;
@@ -84,17 +85,27 @@ CSQLColumns::CSQLColumns (const char * szCatalog
 		{
 			const CDesc * pDesc = pTable->desc(j);
 			assert (pDesc);
+			short nType = pDesc->type();
+			const CSQLTypeInfo * pType = aSQLTypeInfo[nType];
+			assert (pType);
 			aRecord.column = pDesc->name();
 			aRecord.datatype = pDesc->type();
-//			aRecord.type_name = pTable->desc (SQL_DESC_TYPE, j).asNumber();
+			aRecord.type_name = pType->TYPE_NAME();
 			aRecord.size = pDesc->size();
 			aRecord.length = pDesc->aSQL_DESC_LENGTH();
 			aRecord.digits = pDesc->aSQL_DESC_PRECISION();
 			aRecord.num_prec_radix = pDesc->aSQL_DESC_NUM_PREC_RADIX();
 			aRecord.nullable = pDesc->aSQL_DESC_NULLABLE();
 			aRecord.remarks = "@@@@ debug";
-
 			aRecord.is_nullable = aRecord.nullable ? "YES" : "NO";
+
+			aRecord.num_prec_radix = pType->NUM_PREC_RADIX();
+			aRecord.column_def = "";
+			aRecord.sql_data_type = nType;
+			aRecord.sql_datetime_sub = 0;
+			aRecord.char_octet_length =pDesc->size();
+			aRecord.ordinal_position = j+1;
+
 			m_aData.push_back (aRecord);
 		}
 	}

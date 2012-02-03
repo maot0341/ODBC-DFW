@@ -20,12 +20,12 @@
 #pragma warning (disable:4786)
 
 
-#include <assert.h>
 #include "idlcpy.h"
+#include "driver.h"
+#include <assert.h>
 #include <windows.h>
 #include <sqlext.h>
 #include <time.h>
-#include "driver.h"
 
 //---------------------------------------------------------------------------
 void idlcpy (const idl::typVariant & vValue, short nType, void* pValue, long nLen, long * pInd)
@@ -299,19 +299,28 @@ void idlcpy (idl::typParam & crbParam, const CParam & aParam)
 idl::RETN * IDL (const idl::typException & aExc)
 {
 	idl::RETN_var vRetn = new idl::RETN;
-	vRetn->nRetn = aExc.nRetn;
+	vRetn->nRetn = SQL_ERROR;
 	ULONG i,n = aExc.aDiag.length();
 	vRetn->aDiag.length(n);
 	for (i=0; i<n; i++)
 	{
 		idl::typDiagItem & raDst = vRetn->aDiag[i];
 		const idl::typDiagItem & aSrc = aExc.aDiag[i];
-		strncpy (raDst.SQLState, aSrc.SQLState, 6);
-		raDst.nError = aSrc.nError;
-		raDst.strError = CORBA::string_dup (aSrc.strError);
+		strncpy (raDst.szState, aSrc.szState, 6);
+		raDst.nCode = aSrc.nCode;
+		raDst.strText = CORBA::string_dup (aSrc.strText);
 		raDst.strFile = CORBA::string_dup (aSrc.strFile);
 		raDst.nLine = aSrc.nLine;
 	}
+	return vRetn._retn();
+}
+//---------------------------------------------------------------------------
+idl::RETN * IDL (const ::CORBA::Exception & aExc)
+{
+	idl::RETN_var vRetn = new idl::RETN;
+	vRetn->nRetn = SQL_ERROR;
+	vRetn->aDiag.length(1);
+	vRetn->aDiag[0] = EXC("08S01", 1999, aExc._to_string());
 	return vRetn._retn();
 }
 //---------------------------------------------------------------------------

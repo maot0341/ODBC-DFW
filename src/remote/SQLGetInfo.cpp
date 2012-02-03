@@ -41,6 +41,7 @@ if (nInfoType == (i)) \
 if (nInfoType == (i)) \
 { \
 	strncpy ((char*)pInfoValue, (const char*)(v), nBufferLength); \
+	((char*)pInfoValue)[nBufferLength-1] = 0; \
 	if (pStringLength) \
 		*pStringLength = strlen((const char*)v);	\
 	return SQL_SUCCESS; \
@@ -70,7 +71,7 @@ SQLGetInfo (SQLHDBC hdbc, SQLUSMALLINT nInfoType, SQLPOINTER pInfoValue
 	INFON (SQL_CATALOG_LOCATION, SQLUSMALLINT, SQL_CL_START);
 	INFOS (SQL_CATALOG_NAME, "N");
 	INFOS (SQL_CATALOG_NAME_SEPARATOR, ".");
-	INFOS (SQL_CATALOG_TERM, "");
+	INFOS (SQL_CATALOG_TERM, "database");
 	INFON (SQL_CATALOG_USAGE, SQLUINTEGER, SQL_CU_DML_STATEMENTS);
 	INFOS (SQL_COLLATION_SEQ, "ISO 8859-1");
 	INFOS (SQL_COLUMN_ALIAS, "Y");

@@ -147,6 +147,7 @@ public:
 	static bool isDateTime(short);
 	static bool isBinary (short);
 	static bool isNumber (short);
+	static bool isRelation (short);
 
 #if 0
 	virtual bool isBool() const     { return isBool(type()); }
@@ -236,10 +237,11 @@ typedef vector<CValue> CRecord;
 class CUnary : public CTerm
 {
 public:
-	CUnary (int head, CTerm *term) : m_nHead(head), m_pTerm(term)  { m_strDebug = id(this); }
+	CUnary (int head, CTerm *term) : m_nHead(head), m_pTerm(term)  { m_strDebug = sqlp::id(this); }
 	int head() const { return m_nHead; }
 	const CTerm* arg() const { return m_pTerm; }
 	short type() const;
+	virtual const char * fn() const { return 0; }
 
 	bool isNull() const;
 	double asDouble() const;
@@ -258,6 +260,8 @@ public:
 	~CFunction();
 
 	static short type (const vector<CTerm*> &);
+	bool isRelation() const { return CTerm::isRelation (m_nHead); }
+	
 	int head() const { return m_nHead; }
 	const vector<CTerm*> & args() const { return m_aArgs; }
 	short type() const;
@@ -266,7 +270,6 @@ public:
 	const char * asString() const ;
 	void arg (CTerm*);
 	bool isAssociative (CFunction *);
-	bool isComparison() const;
 	void append (CTerm* t) { m_aArgs.push_back(t); }
 	CTerm * arg(int);
 
@@ -456,10 +459,13 @@ public:
 	const char * sql(int len, bool quoted);
 	const char * table (const char * catalog, const char * schema, const char * name, const char * alias);
 	CTerm * column (const char * schema, const char * table, const char * column);
-	CValue * value (double);
-	CValue * value (long int);
+	CValue * value (short type, double);
 	CValue * value (const char *);
+//	CValue * value (double);
+//	CValue * value (long int);
+//	CValue * value (const char *);
 	CValue * time  (const char *);
+	CValue * time  (time_t);
 	CUnary * unary (int head, CTerm *);
 	CFunction * func (int head, va_list args);
 	CParam * param();

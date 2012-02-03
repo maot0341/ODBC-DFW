@@ -32,7 +32,7 @@ using namespace stdx;
 CStmtHandle::CStmtHandle (CDatabase * paParent, idl::IStmt_var & vStmt)
 : CHandle (paParent)
 {
-	m_aStmtStub = vStmt;
+	m_aIStub = vStmt;
 	assert (paParent);
 	m_nSQL_ATTR_ROW_ARRAY_SIZE = 1;
 
@@ -43,17 +43,17 @@ CStmtHandle::CStmtHandle (CDatabase * paParent, idl::IStmt_var & vStmt)
 CStmtHandle::~CStmtHandle()
 {
 	ASSUME (m_paParent);
-	m_aStmtStub->destroy();
+	m_aIStub->destroy();
 	int nLink = m_aLink.size();
 	int i;
 	for (i=0; i<nLink;i++)
 		delete m_aLink[i];
-//	m_aStmtStub = idl::IStmt::_nil();
+//	m_aIStub = idl::IStmt::_nil();
 }
  //---------------------------------------------------------------------------
 bool CStmtHandle::isValid() const
 { 
-	return !CORBA::is_nil (m_aStmtStub) && !m_aStmtStub->_non_existent(); 
+	return !CORBA::is_nil (m_aIStub) && !m_aIStub->_non_existent(); 
 }
 //---------------------------------------------------------------------------
 bool CStmtHandle::connect()
@@ -61,8 +61,8 @@ bool CStmtHandle::connect()
 	CDatabase * paDatabase = dynamic_cast<CDatabase*>(m_paParent);
 	if (!paDatabase)
 		return false;
-	m_aStmtStub = (*paDatabase)->SQLAllocStmt();
-	if(CORBA::is_nil (m_aStmtStub))
+	m_aIStub = (*paDatabase)->SQLAllocStmt();
+	if(CORBA::is_nil (m_aIStub))
 		return false;
 	return true;
 }
@@ -71,26 +71,10 @@ void
 CStmtHandle::prepare(const char * szSQL)
 {
 	m_iRecord = 0;
-//	m_aError.clear();
 	m_szSQL = szSQL;
 	m_vHeader.length(0);
-	m_vRetn = 0;
-	m_iError = 0;
+	RETN(0);
 }
-//---------------------------------------------------------------------------
-#if 0
-idl::IStmt_ptr
-CStmtHandle::operator->()
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-//		throw EXC("08S01", 2500, "driver is not connected!");
-	return m_aStmtStub;
-//	assert(!CORBA::is_nil (m_aStmtStub));
-//	return m_aStmtStub;
-}
-#endif
 //---------------------------------------------------------------------------
 SQLRETURN
 CStmtHandle::SQLBindCol (int col, short typ, void* val, long len, long *ind)
@@ -98,10 +82,24 @@ CStmtHandle::SQLBindCol (int col, short typ, void* val, long len, long *ind)
 	int i = col - 1;
 	if (col <= 0)
 		return SQL_ERROR;
+#if 1
+	vector<CTarget> & raTarget = m_aTarget;
+	const int nTarget = raTarget.size();
+	if (nTarget < col)
+		raTarget.resize (col);
+	CTarget & raField = raTarget[i];
+	raField.nCol = col;
+	raField.nTyp = typ;
+	raField.pVal = static_cast<char*>(val);
+	raField.nLen = len;
+	raField.pInd = ind;
+	return SQL_SUCCESS;
+#else
 	if (col > m_aLink.size())
 		m_aLink.resize (col);
 	m_aLink[i] = CLink::create (typ, val, len, ind);
 	return SQL_SUCCESS;
+#endif
 }
 //---------------------------------------------------------------------------
 short
@@ -110,7 +108,7 @@ CStmtHandle::cols()
 	short nCols = m_vHeader.length();
 	if (nCols)
 		return nCols;
-	m_aStmtStub->desc (m_vHeader);
+	m_aIStub->desc (m_vHeader);
 	return m_vHeader.length();
 }
 //---------------------------------------------------------------------------
@@ -121,7 +119,7 @@ CStmtHandle::SQLFreeStmt (SQLUSMALLINT nOption)
 		m_iRecord = 0;
 	if (nOption == SQL_UNBIND)
 		m_aTarget.clear();
-	if (CORBA::is_nil (m_aStmtStub))
+	if (CORBA::is_nil (m_aIStub))
 		return SQL_ERROR;
 	return SQL_SUCCESS;
 }
@@ -129,7 +127,7 @@ CStmtHandle::SQLFreeStmt (SQLUSMALLINT nOption)
 SQLRETURN
 CStmtHandle::SQLFetch()
 {
-	if (CORBA::is_nil (m_aStmtStub))
+	if (CORBA::is_nil (m_aIStub))
 		return SQL_ERROR;
 //	idl::RETN nRetn = SQL_SUCCESS;
 	idl::RETN_var vRetn;
@@ -139,32 +137,23 @@ CStmtHandle::SQLFetch()
 	const ULONG iRec = m_iRecord;
 	const ULONG nRow = m_nCache;
 	const ULONG iRow = (nRow) ? iRec % nRow : 0;
-	if (iRow == 0)
-	try
-	{
-		m_iCache = iRec;
+	m_iCache = iRec;
 #if 0
-		m_vRetn = m_aStmtStub->SQLFetchRef (iRec, nRow, m_vRecord);
-		m_iError = 0;
+	if (iRow == 0)
+		RETN (m_aIStub->SQLFetchRef (iRec, nRow, m_vRecord));
 #else
+	if (iRow == 0)
+	{
 		idl::typRecord_var vRecord;
-		m_vRetn = m_aStmtStub->SQLFetch (iRec, nRow, vRecord);
+		RETN (m_aIStub->SQLFetch (iRec, nRow, vRecord));
 		m_vRecord = vRecord;
-		m_iError = 0;
+	}
 #endif
-		if (m_vRetn != SQL_SUCCESS)
-		if (m_vRetn != SQL_SUCCESS_WITH_INFO)
-			return m_vRetn->nRetn;
-	}
-	catch (const idl::typException & aExc)
-	{
-		m_vRetn = IDL (aExc);
-	}
-	catch (const CORBA::UserException & aExc)
-	{
-		int i = 2;
-		i++;
-	}
+	const short nRetn = RETN();
+	if (nRetn != SQL_SUCCESS)
+	if (nRetn != SQL_SUCCESS_WITH_INFO)
+		return nRetn;
+
 	const ULONG nRows = m_vRecord.length() / nCols;
 	if (m_nCache == 0)
 		m_nCache = nRows;
@@ -197,7 +186,7 @@ CStmtHandle::SQLFetch()
 		j = iRow * nCols + i;
 		pLink->write (m_vRecord[j]);
 	}
-	return m_vRetn->nRetn;
+	return nRetn;
 }
 //---------------------------------------------------------------------------
 SQLRETURN
@@ -238,7 +227,7 @@ CStmtHandle::SQLDescribeCol (SQLUSMALLINT nColumnNumber
 {
 	short nCols = m_vHeader.length();
 	if (nCols == 0)
-		m_aStmtStub->desc (m_vHeader);
+		m_aIStub->desc (m_vHeader);
 	nCols = m_vHeader.length();
 	short i = nColumnNumber - 1;
 	if (0 > i || i >= nCols)
@@ -280,7 +269,7 @@ CStmtHandle::SQLColAttribute
 {
 	short nCols = m_vHeader.length();
 	if (nCols == 0)
-		m_aStmtStub->desc (m_vHeader);
+		m_aIStub->desc (m_vHeader);
 	nCols = m_vHeader.length();
 	short i = iCol - 1;
 	if (0 > i || i >= nCols)
@@ -339,8 +328,7 @@ SQLRETURN
 CStmtHandle::SQLExecute()
 {
 	short i,nParam = m_aAPD.size();
-	m_vRetn = m_aStmtStub->SQLDescribeParams (m_aIPD);
-	m_iError = 0;
+	RETN (m_aIStub->SQLDescribeParams (m_aIPD));
 	idl::typParamset aAPD (m_aIPD);
 	for (i=0; i<nParam; i++)
 	{
@@ -348,11 +336,99 @@ CStmtHandle::SQLExecute()
 			m_aAPD[i].m_nValueType = m_aIPD[i].m_nValueType;
 		idlcpy (aAPD[i], m_aAPD[i]);
 	}
-	m_vRetn = m_aStmtStub->SQLParams (aAPD);
-	m_iError = 0;
-	m_vRetn = m_aStmtStub->SQLExecute ();
-	m_iError = 0;
-	return m_vRetn->nRetn;
+	RETN (m_aIStub->SQLParams (aAPD));
+	RETN (m_aIStub->SQLExecute ());
+	return RETN();
 	return SQL_SUCCESS;
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLNumResultCols (SQLSMALLINT *pCols)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLNumResultCols (*pCols));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLColAttribute (SQLUSMALLINT nCol, SQLUSMALLINT nAttr, idl::typVariant_var& vValue)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLColAttribute (nCol, nAttr, vValue));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLPrepare (const char * szSQL)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLPrepare (szSQL));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLGetTypeInfo (SQLSMALLINT nDataType)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLGetTypeInfo (nDataType));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLSpecialColumns 
+(	const CORBA::String_var & strCatalog
+,	const CORBA::String_var & strSchema
+,	const CORBA::String_var & strTabel
+,	SQLUSMALLINT nScope
+,	SQLUSMALLINT nNullable)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLSpecialColumns (strCatalog, strSchema, strTabel, nScope, nNullable));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLStatistics 
+(	const CORBA::String_var & strCatalog
+,	const CORBA::String_var & strSchema
+,	const CORBA::String_var & strTable
+,	SQLUSMALLINT nUnique
+,	SQLUSMALLINT nReserved)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLStatistics (strCatalog, strSchema, strTable, nUnique, nReserved));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLTables 
+(	const CORBA::String_var & strCatalog
+,	const CORBA::String_var & strSchema
+,	const CORBA::String_var & strTable
+,	const CORBA::String_var & strType)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLTables (strCatalog, strSchema, strTable, strType));
+	return RETN();
+}
+//---------------------------------------------------------------------------
+SQLRETURN CStmtHandle::SQLColumns 
+(	const CORBA::String_var & strCatalog
+,	const CORBA::String_var & strSchema
+,	const CORBA::String_var & strTable
+,	const CORBA::String_var & strColumn)
+{
+	ASSUME(!CORBA::is_nil (m_aIStub));
+	if (m_aIStub->_non_existent())
+		connect();
+	RETN (m_aIStub->SQLColumns (strCatalog, strSchema, strTable, strColumn));
+	return RETN();
 }
 //---------------------------------------------------------------------------

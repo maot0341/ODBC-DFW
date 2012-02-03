@@ -25,6 +25,7 @@
 #include "tableset.h"
 #include "resultset.h"
 #include "function.h"
+#include "unary.h"
 #include <stdx/debug.h>
 #include <stdx/utils.h>
 
@@ -259,12 +260,28 @@ string id(const vector<CTerm*> & aArgs, const char * szSep=",")
 	vector<CTerm*>::const_iterator iTerm = aArgs.begin();
 	for (; iTerm != aArgs.end(); iTerm++)
 	{
-		const CTerm * pTerm = *iTerm;
-		string strTerm = id(pTerm);
 		if (iTerm != aArgs.begin())
 			str.append (szSep);
+		const CTerm * pTerm = *iTerm;
+		string strTerm = id(pTerm);
 		str.append (strTerm);
 	}
+	return str;
+}
+//---------------------------------------------------------------------------
+// Args - Id
+//---------------------------------------------------------------------------
+string id (vector<CTerm*>::const_iterator ia, vector<CTerm*>::const_iterator ie)
+{
+	string str = "(";
+	vector<CTerm*>::const_iterator i = ia;
+	for (; i != ie; i++)
+	{
+		if (i != ia)
+			str += ",";
+		str += id(*i);
+	}
+	str += ")";
 	return str;
 }
 //---------------------------------------------------------------------------
@@ -316,7 +333,6 @@ string id(const CObject* pObject)
 	const CUnary * pUnary = dynamic_cast<const CUnary*>(pObject);
 	if (pUnary)
 	{
-		char sz[8000];
 		string strTerm = "*";
 		if (pUnary->m_pTerm)
 			strTerm = id(pUnary->m_pTerm);
@@ -335,22 +351,23 @@ string id(const CObject* pObject)
 		: nHead == lNULL ? "IS NULL"
 		: nHead == lNOT ? "NOT"
 		: nHead == lLEN ? "LEN"
+		: nHead == lLOG ? "LOG"
+		: nHead == lEXP ? "EXP"
+		: nHead == lSQRT ? "SQRT"
+		: nHead == '/' ? "1/"
 		: 0;
-		const char * szOrder
+		if (szFunc)
+			return stringf ("%s(%s)", szFunc, szTerm);
+
+		szFunc
 		= nHead == lASC ? "ASC"
 		: nHead == lDESC ? "DESC"
 		: 0;
 		if (szFunc)
-			sprintf (sz, "%s(%s)", szFunc, szTerm);
-		else if (szOrder)
-			sprintf (sz, "%s %s", szTerm, szOrder);
-		else if (nHead == '/')
-			sprintf (sz, "1/%s", szTerm);
-		else if (ispunct (nHead))
-			sprintf (sz, "%c%s", (char)nHead, szTerm);
-		else
-			sprintf (sz, "#%d(%s)", nHead, szTerm);
-		return string(sz);
+			stringf ("%s %s", szTerm, szFunc);
+		if (ispunct(nHead))
+			return stringf ("%c%s", (char)nHead, szTerm);
+		return stringf ("#%d(%s)", nHead, szTerm);
 	}
 	const CFunction * pFunc = dynamic_cast<const CFunction*>(pObject);
 	if (pFunc)
@@ -358,86 +375,55 @@ string id(const CObject* pObject)
 		const int nHead = pFunc->head();
 		const vector<CTerm*> & aArgs = pFunc->args();
 		const char * szFunc = 0;
-		string str;
-		if (nHead == '>'
-		|| nHead == '<'
-		|| nHead == '='
-		|| nHead == '+'
-		|| nHead == '*')
-		{
-			char szHead[4];
-			sprintf (szHead, " %c ", (char)nHead);
-			return id (aArgs, szHead);
-		}
+
 		szFunc
-		= nHead == lAND ? " AND "
-		: nHead == lOR ? " OR "
-		: nHead == lNEQ ? " <> "
-		: nHead == lLEQ ? " <= "
-		: nHead == lGEQ ? " >= "
+		= nHead == lAND ? "AND"
+		: nHead == lOR ? "OR"
+		: nHead == lNEQ ? "<>"
+		: nHead == lLEQ ? "<="
+		: nHead == lGEQ ? ">="
 		: nHead == lNULL ? ","
+		: nHead == '>' ? ">"
+		: nHead == '<' ? "<"
+		: nHead == '=' ? "="
+		: nHead == '+' ? "+"
+		: nHead == '*' ? "*"
 		: 0;
 		if (szFunc)
-		{
 			return id (aArgs, szFunc);
-		}
+
+		szFunc
+		= nHead == lMIN ? "MIN"
+		: nHead == lMAX ? "MAX"
+		: nHead == lEXP ? "EXP"
+		: nHead == lLOG ? "LOG"
+		: 0;
+		if (szFunc)
+			return string(szFunc) + id(aArgs.begin(),aArgs.end());
+
 		if (nHead == lBETWEEN)
 		{
-			char sz[8000];
 			vector<CTerm*>::const_iterator iTerm = aArgs.begin();
 			const CTerm * pTerm = *iTerm;
 			const CTerm * pLim1 = *(iTerm++);
 			const CTerm * pLim2 = *(iTerm++);
 			ASSUME (pTerm && pLim1 && pLim2);
-			string strTerm = id(pTerm);
-			string strLim1 = id (pLim1);
-			string strLim2 = id (pLim2);
-			sprintf (sz, "%s BETWEEN %s AND %s", strTerm.c_str(), strLim1.c_str(), strLim2.c_str());
-			return sz;
+			string str = id(pTerm);
+			str += " BETWEEN ";
+			str +=  id (pLim1);
+			str += " AND ";
+			str += id (pLim2);
+			return str;
 		}
 		if (nHead == lIN)
 		{
-			int i;
-			char sz[8000];
 			const int nArgs = aArgs.size();
 			assert (nArgs > 0);
 			const CTerm * pTerm = aArgs[0];
-			string strTerm = id(pTerm);
-			strcpy (sz, strTerm.c_str());
-			strcat (sz, " IN(");
-			for (i=1; i<nArgs; i++)
-			{
-				const CTerm * pTerm = aArgs[i];
-				if (i > 1)
-					strcat (sz, ",");
-				string strItem = id(pTerm);
-				const char * szItem = strItem.c_str();
-				strcat (sz, szItem);
-			}
-			strcat (sz, ")");
-			return sz;
-		}
-		if (nHead == lMIN || nHead == lMAX)
-		{
-			char sz[8000];
-			memset (sz, 0, sizeof(sz));
-			if (nHead == lMIN)
-				strcpy (sz, "MIN(");
-			if (nHead == lMAX)
-				strcpy (sz, "MAX(");
-			const int nArgs = aArgs.size();
-			int i;
-			for (i=0; i<nArgs; i++)
-			{
-				const CTerm * pTerm = aArgs[i];
-				if (i > 0)
-					strcat (sz, ",");
-				string strItem = id(pTerm);
-				const char * szItem = strItem.c_str();
-				strcat (sz, szItem);
-			}
-			strcat (sz, ")");
-			return sz;
+			string str = id (pTerm);
+			str += " IN ";
+			str += id (aArgs.begin()+1, aArgs.end());
+			return str;
 		}
 		const char * szFormat
 		= nHead == lFMT ? "FMT(%s)"
@@ -726,6 +712,20 @@ CTerm::isDateTime (short nType)
 		return true;
 	}
 	return false;
+}
+//---------------------------------------------------------------------------
+bool 
+CTerm::isRelation (short nHead)
+{
+	if (nHead != '=')
+	if (nHead != '<')
+	if (nHead != '>')
+	if (nHead != lNEQ)
+	if (nHead != lLEQ)
+	if (nHead != lGEQ)
+	if (nHead != lLIKE)
+		return false;
+	return true;
 }
 //---------------------------------------------------------------------------
 bool
@@ -1069,7 +1069,6 @@ CUnary::asDouble() const
 		return exp (dValue);
 	if (m_nHead == lLOG)
 		return log (dValue);
-
 	if (m_nHead == lNOT)
 		return ((int)dValue) == 0;
 	if (m_nHead == '-')
@@ -1077,7 +1076,7 @@ CUnary::asDouble() const
 	if (m_nHead == '/')
 	{
 		if (!dValue)
-			throw EXC("22012", 22012, "Division by zero");
+			throw EXC("22012", 22012, "Division by zero: %s", m_strDebug.c_str());
 		return 1/dValue;
 	}
 /*
@@ -1193,20 +1192,6 @@ CFunction::isAssociative (CFunction * pFunc)
 	if (pFunc->m_nHead == NULL)
 		return true;
 	return false;
-}
-//---------------------------------------------------------------------------
-bool 
-CFunction::isComparison() const
-{
-	int nHead = head();
-	if (nHead != '=')
-	if (nHead != '<')
-	if (nHead != '>')
-	if (nHead != lLEQ)
-	if (nHead != lGEQ)
-	if (nHead != lLIKE)
-		return false;
-	return true;
 }
 //---------------------------------------------------------------------------
 void
@@ -1820,6 +1805,8 @@ CTable::~CTable()
 bool
 CTable::get (vector<ULONG> & raIndex, int nHeader, const char * szColumn, CTerm* pValue) const
 {
+	if (szColumn == 0 || pValue == 0)
+		return false;
 	const ULONG i = colidx (szColumn);
 	if (i < cols())
 		return get(raIndex, nHeader, i, pValue);
@@ -1967,6 +1954,45 @@ CStatement::sql (int nLength, bool bQuoted)
 }
 //---------------------------------------------------------------------------
 CValue *
+CStatement::value (short nType, double dValue)
+{
+	vector<CObject*>::iterator iObject = m_aMemory.begin();
+	for (; iObject!=m_aMemory.end(); iObject++)
+	{
+		CValue * pTerm = dynamic_cast<CValue*>(*iObject);
+		if (!pTerm)
+			continue;
+		short nType = pTerm->type();
+		if (CTerm::isNumber(nType))
+		if (pTerm->asDouble() == dValue)
+			return pTerm;
+	}
+	CValue * pTerm = new CValue (nType, dValue);
+	m_aMemory.push_back (pTerm);
+	return pTerm;
+}
+//---------------------------------------------------------------------------
+CValue *
+CStatement::value (const char * szValue)
+{
+	vector<CObject*>::iterator iObject = m_aMemory.begin();
+	for (; iObject!=m_aMemory.end(); iObject++)
+	{
+		CValue * pTerm = dynamic_cast<CValue*>(*iObject);
+		if (!pTerm)
+			continue;
+		short nType = pTerm->type();
+		if (CTerm::isString (nType))
+		if (strcmp (pTerm->asString(),szValue) == 0)
+			return pTerm;
+	}
+	CValue * pTerm = new CValue (szValue);
+	m_aMemory.push_back (pTerm);
+	return pTerm;
+}
+//---------------------------------------------------------------------------
+#if 0
+CValue *
 CStatement::value (long int nValue)
 {
 	vector<CObject*>::iterator iObject = m_aMemory.begin();
@@ -2022,20 +2048,11 @@ CStatement::value (const char * szValue)
 	m_aMemory.push_back (pTerm);
 	return pTerm;
 }
+#endif
 //---------------------------------------------------------------------------
 CValue *
-CStatement::time (const char * szValue)
+CStatement::time (time_t nTime)
 {
-	struct tm aTime;
-	memset (&aTime, 0, sizeof(aTime));
-	const int nRead = sscanf (szValue, "%d-%d-%d %d:%d:%d"
-	, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
-	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-	ASSUME (nRead >= 3);
-	aTime.tm_year -= 1900;
-	aTime.tm_mon  -= 1;
-	const time_t nTime = mktime (&aTime);
-
 	vector<CObject*>::iterator iObject = m_aMemory.begin();
 	for (; iObject!=m_aMemory.end(); iObject++)
 	{
@@ -2050,6 +2067,21 @@ CStatement::time (const char * szValue)
 	CValue * pTerm = new CValue (SQL_DATETIME, nTime);
 	m_aMemory.push_back (pTerm);
 	return pTerm;
+}
+//---------------------------------------------------------------------------
+CValue *
+CStatement::time (const char * szValue)
+{
+	struct tm aTime;
+	memset (&aTime, 0, sizeof(aTime));
+	const int nRead = sscanf (szValue, "%d-%d-%d %d:%d:%d"
+	, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
+	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+	ASSUME (nRead >= 3);
+	aTime.tm_year -= 1900;
+	aTime.tm_mon  -= 1;
+	const time_t nTime = mktime (&aTime);
+	return time (nTime);
 }
 //---------------------------------------------------------------------------
 CTerm *
@@ -2105,7 +2137,40 @@ CStatement::unary (int nHead, CTerm * pTerm)
 			continue;
 		return pUnary;
 	}
-	CUnary * pUnary = new CUnary (nHead, pTerm);
+	CUnary * pUnary = 0;
+	switch (nHead)
+	{
+	case lLEN:
+		pUnary = new TUnary<lLEN> (pTerm);
+		break;
+	case lABS:
+		pUnary = new TUnary<lABS> (pTerm);
+		break;
+	case lSIGN:
+		pUnary = new TUnary<lSIGN> (pTerm);
+		break;
+	case lSQRT:
+		pUnary = new TUnary<lSQRT> (pTerm);
+		break;
+	case lEXP:
+		pUnary = new TUnary<lEXP> (pTerm);
+		break;
+	case lLOG:
+		pUnary = new TUnary<lLOG> (pTerm);
+		break;
+	case lNOT:
+		pUnary = new TUnary<lNOT> (pTerm);
+		break;
+	case '-':
+		pUnary = new TUnary<'-'> (pTerm);
+		break;
+	case '/':
+		pUnary = new TUnary<'/'> (pTerm);
+		break;
+	default:
+		pUnary = new CUnary (nHead, pTerm);
+	}
+	
 	ASSUME (pUnary);
 	m_aMemory.push_back (pUnary);
 	return pUnary;
@@ -2117,23 +2182,26 @@ CStatement::func (int nHead, va_list args)
 	vector<CTerm*> aArgs;
 	aArgs.clear();
 	aArgs.reserve(2);
-	//// flatten arg-list a,(b,c) ==> (a,b,c)
+	////-----------------------------------------
+	//// build args: a,(b,c) ==> (a,b,c)
+	////-----------------------------------------
 	while(true)
 	{
 		CTerm * pTerm = va_arg (args, CTerm*);
 		if (!pTerm)
 			break;
 		CFunction * pFunc = dynamic_cast<CFunction*>(pTerm);
-		if (pFunc && pFunc->head() == lNULL)
-		//if (pFunc->args().size())
+		if (pFunc == 0 || pFunc->head() != lNULL)
+			aArgs.push_back (pTerm);
+		else
 		{
 			const vector<CTerm*> & aList = pFunc->args();
 			aArgs.insert (aArgs.end(), aList.begin(), aList.end());
 		}
-		else
-			aArgs.push_back (pTerm);
 	}
-	//// lookup (fuction allready defined)
+	////-----------------------------------------
+	//// lookup (fuction allready defined?)
+	////-----------------------------------------
 	vector<CObject*>::iterator iObject = m_aMemory.begin();
 	for (; iObject!=m_aMemory.end(); iObject++)
 	{
@@ -2157,6 +2225,9 @@ CStatement::func (int nHead, va_list args)
 			continue;
 		return pFunc;
 	}
+	////-----------------------------------------
+	//// new function: register
+	////-----------------------------------------
 	CFunction * pFunc = 0;
 	switch (nHead)
 	{

@@ -24,9 +24,9 @@
 
 #include <OB/CORBA.h>
 #include <idl/IRemote_idl.h>
-#include <vector>
 #include "CHandle.h"
 #include "CParam.h"
+#include <vector>
 
 using namespace std;
 //---------------------------------------------------------------------------
@@ -41,6 +41,10 @@ public:
 	void prepare (const char * sql=0);
 	const char * SQL() const { return m_szSQL; }
 	short cols();
+	bool isValid() const;
+	bool connect();
+	ULONG row() const { return (m_nCache) ? (m_iRecord - 1) % m_nCache : 0; }
+
 
 	SQLRETURN SQLFetch();
 	SQLRETURN SQLGetData (int col, short typ, void* val, long len, long *ind);
@@ -87,11 +91,7 @@ public:
 	, SQLINTEGER *pStrLen_or_IndPtr
 	);
 
-	bool isValid() const;
-	bool connect();
-
-	ULONG row() const { return (m_nCache) ? (m_iRecord - 1) % m_nCache : 0; }
-
+protected:
 	idl::typHeader m_vHeader;
 	idl::typRecord m_vRecord;
 
@@ -101,7 +101,7 @@ public:
 	vector<CParam> m_aAPD;
 	idl::typParamset m_aIPD;
 
-	idl::IStmt_var m_aStmtStub;
+	idl::IStmt_var m_aIStub;
 	ULONG m_iRecord;
 	const char * m_szSQL;
 
@@ -110,111 +110,5 @@ public:
 	ULONG m_iCache;
 	ULONG m_nCache;
 };
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLNumResultCols (SQLSMALLINT *pCols)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLNumResultCols (*pCols);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLColAttribute (SQLUSMALLINT nCol, SQLUSMALLINT nAttr, idl::typVariant_var& vValue)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLColAttribute (nCol, nAttr, vValue);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLPrepare (const char * szSQL)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLPrepare (szSQL);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLGetTypeInfo (SQLSMALLINT nDataType)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLGetTypeInfo (nDataType);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLSpecialColumns 
-(	const CORBA::String_var & strCatalog
-,	const CORBA::String_var & strSchema
-,	const CORBA::String_var & strTabel
-,	SQLUSMALLINT nScope
-,	SQLUSMALLINT nNullable)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLSpecialColumns (strCatalog, strSchema, strTabel, nScope, nNullable);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLStatistics 
-(	const CORBA::String_var & strCatalog
-,	const CORBA::String_var & strSchema
-,	const CORBA::String_var & strTable
-,	SQLUSMALLINT nUnique
-,	SQLUSMALLINT nReserved)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLStatistics (strCatalog, strSchema, strTable, nUnique, nReserved);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLTables 
-(	const CORBA::String_var & strCatalog
-,	const CORBA::String_var & strSchema
-,	const CORBA::String_var & strTable
-,	const CORBA::String_var & strType)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLTables (strCatalog, strSchema, strTable, strType);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
-//---------------------------------------------------------------------------
-inline
-SQLRETURN CStmtHandle::SQLColumns 
-(	const CORBA::String_var & strCatalog
-,	const CORBA::String_var & strSchema
-,	const CORBA::String_var & strTable
-,	const CORBA::String_var & strColumn)
-{
-	ASSUME(!CORBA::is_nil (m_aStmtStub));
-	if (m_aStmtStub->_non_existent())
-		connect();
-	m_vRetn = m_aStmtStub->SQLColumns (strCatalog, strSchema, strTable, strColumn);
-	m_iError = 0;
-	return m_vRetn->nRetn;
-}
 //---------------------------------------------------------------------------
 #endif

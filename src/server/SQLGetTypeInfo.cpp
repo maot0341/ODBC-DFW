@@ -48,7 +48,7 @@ public:
 	short UNSIGNED_ATTRIBUTE() const                  { return NULL; }
 	short FIXED_PREC_SCALE() const                    { return SQL_FALSE; }
 	short AUTO_UNIQUE_VALUE() const                   { return NULL; }
-	const char * LOCAL_TYPE_NAME() const              { return ""; }
+	const char * LOCAL_TYPE_NAME() const              { return "GUID"; }
 	short MINIMUM_SCALE() const                       { return NULL; }
 	short MAXIMUM_SCALE() const                       { return NULL; }
 	short SQL_DATETIME_SUB() const                    { return NULL; }
@@ -73,7 +73,7 @@ public:
 	short UNSIGNED_ATTRIBUTE() const                  { return NULL; }
 	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
 	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
-	const char * LOCAL_TYPE_NAME() const              { return ""; }
+	const char * LOCAL_TYPE_NAME() const              { return "CHAR"; }
 	short MINIMUM_SCALE() const                       { return 0; }
 	short MAXIMUM_SCALE() const                       { return 0; }
 	short SQL_DATETIME_SUB() const                    { return SQL_INTERVAL_HOUR_TO_MINUTE; }
@@ -81,21 +81,34 @@ public:
 	short INTERVAL_PRECISION() const                  { return NULL; }
 };
 //---------------------------------------------------------------------------
-class CSQLTypeInfoVARCHAR: public CSQLTypeInfoCHAR
+class CSQLTypeInfoVARCHAR: public CSQLTypeInfo
 {
 public:
-	CSQLTypeInfoVARCHAR() : CSQLTypeInfoCHAR(SQL_VARCHAR) {}
-	const char * TYPE_NAME() const                    { return "VARCHAR";  }
-	long  COLUMN_SIZE() const                         { return MAXLONG; }
-	static const CSQLTypeInfoVARCHAR Inst;
+	CSQLTypeInfoVARCHAR() : CSQLTypeInfo(SQL_VARCHAR) {}
+	const char * TYPE_NAME() const                    { return "VARCHAR"; }
+	long  COLUMN_SIZE() const                         { return 255; }
+	const char * LITERAL_PREFIX() const               { return "\""; }
+	const char * LITERAL_SUFFIX() const               { return "\""; }
+	const char * CREATE_PARAMS() const                { return "length"; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_TRUE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return NULL; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "VARCHAR"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return SQL_INTERVAL_HOUR_TO_MINUTE; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
 };
 //---------------------------------------------------------------------------
-class CSQLTypeInfoNUMERIC: public CSQLTypeInfo
+class CSQLTypeInfoINTEGER: public CSQLTypeInfo
 {
 public:
-	CSQLTypeInfoNUMERIC (short t) : CSQLTypeInfo(t) {}
-	CSQLTypeInfoNUMERIC() : CSQLTypeInfo(SQL_NUMERIC) {}
-	const char * TYPE_NAME() const                    { return "NUMERIC"; }
+	CSQLTypeInfoINTEGER() : CSQLTypeInfo(SQL_INTEGER) {}
+	const char * TYPE_NAME() const                    { return "INTEGER"; }
 	long  COLUMN_SIZE() const                         { return 10; }
 	const char * LITERAL_PREFIX() const               { return ""; }
 	const char * LITERAL_SUFFIX() const               { return ""; }
@@ -106,7 +119,76 @@ public:
 	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
 	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
 	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
-	const char * LOCAL_TYPE_NAME() const              { return ""; }
+	const char * LOCAL_TYPE_NAME() const              { return "INTEGER"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+//---------------------------------------------------------------------------
+class CSQLTypeInfoFLOAT: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoFLOAT() : CSQLTypeInfo(SQL_FLOAT) {}
+	const char * TYPE_NAME() const                    { return "FLOAT"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "FLOAT"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+//---------------------------------------------------------------------------
+class CSQLTypeInfoREAL: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoREAL() : CSQLTypeInfo(SQL_REAL) {}
+	const char * TYPE_NAME() const                    { return "REAL"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "REAL"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+//---------------------------------------------------------------------------
+class CSQLTypeInfoDOUBLE: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoDOUBLE() : CSQLTypeInfo(SQL_DOUBLE) {}
+	const char * TYPE_NAME() const                    { return "DOUBLE"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "DOUBLE"; }
 	short MINIMUM_SCALE() const                       { return 0; }
 	short MAXIMUM_SCALE() const                       { return 0; }
 	short SQL_DATETIME_SUB() const                    { return NULL; }
@@ -117,8 +199,7 @@ public:
 class CSQLTypeInfoDATETIME: public CSQLTypeInfo
 {
 public:
-	CSQLTypeInfoDATETIME (short t) : CSQLTypeInfo(t) {}
-	CSQLTypeInfoDATETIME() : CSQLTypeInfo(SQL_NUMERIC) {}
+	CSQLTypeInfoDATETIME() : CSQLTypeInfo(SQL_DATETIME) {}
 	const char * TYPE_NAME() const                    { return "DATETIME"; }
 	long  COLUMN_SIZE() const                         { return 10; }
 	const char * LITERAL_PREFIX() const               { return ""; }
@@ -130,13 +211,84 @@ public:
 	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
 	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
 	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
-	const char * LOCAL_TYPE_NAME() const              { return ""; }
+	const char * LOCAL_TYPE_NAME() const              { return "DATETIME"; }
 	short MINIMUM_SCALE() const                       { return 0; }
 	short MAXIMUM_SCALE() const                       { return 0; }
 	short SQL_DATETIME_SUB() const                    { return NULL; }
 	long  NUM_PREC_RADIX() const                      { return 0; }
 	short INTERVAL_PRECISION() const                  { return NULL; }
 };
+//---------------------------------------------------------------------------
+class CSQLTypeInfoTIMESTAMP: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoTIMESTAMP() : CSQLTypeInfo(SQL_TIMESTAMP) {}
+	const char * TYPE_NAME() const                    { return "TIMESTAMP"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "TIMESTAMP"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+//---------------------------------------------------------------------------
+#if 0
+class CSQLTypeInfoDATE: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoDATE() : CSQLTypeInfo(SQL_DATE) {}
+	const char * TYPE_NAME() const                    { return "DATE"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "DATE"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+//---------------------------------------------------------------------------
+class CSQLTypeInfoTIME: public CSQLTypeInfo
+{
+public:
+	CSQLTypeInfoTIME() : CSQLTypeInfo(SQL_TIME) {}
+	const char * TYPE_NAME() const                    { return "TIME"; }
+	long  COLUMN_SIZE() const                         { return 10; }
+	const char * LITERAL_PREFIX() const               { return ""; }
+	const char * LITERAL_SUFFIX() const               { return ""; }
+	const char * CREATE_PARAMS() const                { return ""; }
+	short NULLABLE() const                            { return SQL_NULLABLE; }
+	short CASE_SENSITIVE() const                      { return SQL_FALSE; }
+	short SEARCHABLE() const                          { return SQL_SEARCHABLE; }
+	short UNSIGNED_ATTRIBUTE() const                  { return SQL_TRUE; }
+	short FIXED_PREC_SCALE() const                    { return SQL_TRUE; }
+	short AUTO_UNIQUE_VALUE() const                   { return SQL_FALSE; }
+	const char * LOCAL_TYPE_NAME() const              { return "TIME"; }
+	short MINIMUM_SCALE() const                       { return 0; }
+	short MAXIMUM_SCALE() const                       { return 0; }
+	short SQL_DATETIME_SUB() const                    { return NULL; }
+	long  NUM_PREC_RADIX() const                      { return 0; }
+	short INTERVAL_PRECISION() const                  { return NULL; }
+};
+#endif
 
 //---------------------------------------------------------------------------
 CSQLGetTypeInfo::CSQLGetTypeInfo (short nType)
@@ -162,13 +314,16 @@ CSQLGetTypeInfo::CSQLGetTypeInfo (short nType)
 	column (SQL_SMALLINT, "INTERVAL_PRECISION",  30, 0, SQL_NULLABLE);
 
 	//SQL_PRED_BASIC  SQL_SEARCHABLE 
-	m_aData[SQL_CHAR]     = new CSQLTypeInfoCHAR (SQL_CHAR);
-	m_aData[SQL_VARCHAR]  = new CSQLTypeInfoCHAR (SQL_VARCHAR);
-	m_aData[SQL_INTEGER]  = new CSQLTypeInfoNUMERIC (SQL_INTEGER);
-	m_aData[SQL_FLOAT]    = new CSQLTypeInfoNUMERIC (SQL_FLOAT);
-	m_aData[SQL_REAL]     = new CSQLTypeInfoNUMERIC (SQL_REAL);
-	m_aData[SQL_DOUBLE]   = new CSQLTypeInfoNUMERIC (SQL_DOUBLE);
-	m_aData[SQL_DATETIME] = new CSQLTypeInfoDATETIME (SQL_DATETIME);
+	m_aData[SQL_CHAR]     = new CSQLTypeInfoCHAR();
+	m_aData[SQL_VARCHAR]  = new CSQLTypeInfoVARCHAR();
+	m_aData[SQL_INTEGER]  = new CSQLTypeInfoINTEGER();
+	m_aData[SQL_FLOAT]    = new CSQLTypeInfoFLOAT();
+	m_aData[SQL_REAL]     = new CSQLTypeInfoREAL();
+	m_aData[SQL_DOUBLE]   = new CSQLTypeInfoDOUBLE();
+	m_aData[SQL_DATETIME] = new CSQLTypeInfoDATETIME();
+	m_aData[SQL_TIMESTAMP] = new CSQLTypeInfoTIMESTAMP();
+//	m_aData[SQL_TIME] = new CSQLTypeInfoTIME();
+//	m_aData[SQL_DATE] = new CSQLTypeInfoDATE();
 
 	m_aKeys = stdx::keys (m_aData);
 }

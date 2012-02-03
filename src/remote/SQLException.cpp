@@ -27,31 +27,18 @@
 
 using namespace stdx;
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-CSQLException::CSQLException (const char * file, size_t line)
-: m_szFile(file)
-, m_nLine(line)
-, m_nCode(0)
-{
-	*m_szState = 0;
-}
-//---------------------------------------------------------------------------
-CSQLException::~CSQLException()
-{
-}
-//---------------------------------------------------------------------------
-const CSQLException &
-CSQLException::set (const char * szState, long nError, const char * szFormat, ...)
+const idl::typDiagItem & 
+CDebugInfo::create (const char * szState, long nCode, const char * szFormat, ...)
 {
 	char szBuff[8000];
 	va_list aArgs;
 	va_start (aArgs, szFormat);
 	vsprintf (szBuff, szFormat, aArgs);
 	va_end(aArgs);
-	m_strText = szBuff;
-	strncpy (m_szState, szState, 5);
-	m_szState[5] = 0;
-	m_nCode = nError;
-	return *this;
+	m_aDiag.strText = (const char*)szBuff;
+	strncpy (m_aDiag.szState, szState, 5);
+	m_aDiag.szState[5] = 0;
+	m_aDiag.nCode = nCode;
+	return m_aDiag;
 }
 //---------------------------------------------------------------------------

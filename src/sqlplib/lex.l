@@ -42,6 +42,10 @@ namespace sqlp
 
  /* macros */
 exponent	([Ee][+-]?[0-9]+)
+date_de     ([0-1]?[0-9]"."[0-1]?[0-9]"."([0-9][0-9])?[0-9][0-9])
+date_us     ([0-1][0-9]"/"[0-1][0-9]"/"([0-9][0-9])?[0-9][0-9])
+time        ([0-9][0-9]":"[0-9][0-9]":"([0-9][0-9])?)
+
 %s SQLESC
 
  //---------------------------------------------------------------------------
@@ -165,6 +169,13 @@ PIVOT		{ return lPIVOT; }
 [0-9]+"."[0-9]*{exponent}?	|
 "."[0-9]+{exponent}?		|
 [0-9]+{exponent}			{ yylval.number = yynumber(); return lNUMBER; }
+
+ /*************************************
+  DATE/TIME
+  *************************************/
+"#"{date_de}{time}?"#" | 
+"#"{date_us}{time}?"#" | 
+"#"{time}"#"				{ yylval.datetime = yydatetime(); return lDATETIME; }
 
 
  /*************************************
@@ -299,6 +310,37 @@ double yynumber()
 		printf("number too big\n");
 	}
 	return d;
+}
+//---------------------------------------------------------------------------
+time_t yydatetime()
+{
+	errno = 0;		// clear error flag
+	struct tm aTime;
+	int n;
+
+	const char * szTime = yytext + 1;
+	memset (&aTime, 0, sizeof(aTime));
+	n = sscanf (szTime, "%hu.%hu.%hu %hu:%hu:hu"
+	, &aTime.tm_mday, &aTime.tm_mon, &aTime.tm_year
+	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+	if (n < 3)
+	n = sscanf (szTime, "%hu/%hu/%hu %hu:%hu:hu"
+	, &aTime.tm_mon, &aTime.tm_year, &aTime.tm_mday
+	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+	if (n < 3 || n == 4)
+		return 0;
+	if (aTime.tm_year > 1900)
+		aTime.tm_year -= 1900;
+	else
+	{
+		const time_t t0 = time(0);
+		struct tm * pNow = localtime (&t0);
+		aTime.tm_year %= 100;
+		aTime.tm_year += pNow->tm_year - (pNow->tm_year % 100);
+	}
+	aTime.tm_mon--;
+	time_t nTime = mktime (&aTime);
+	return nTime;
 }
 //---------------------------------------------------------------------------
 const char * yystring()

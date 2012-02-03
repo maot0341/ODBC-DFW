@@ -38,8 +38,10 @@ const char * table (const char * szCatalog, const char * szSchema, const char * 
 CTerm* column (const char * szSchema, const char * szTable, const char * szColumn);
 CTerm* number (double dValue);
 CTerm* number (long int nValue);
-CTerm* strval (const char * szValue);
+CTerm* value (const char * szValue);
+CTerm* value (short type, double dValue);
 CTerm* time (const char * szValue);
+CTerm* time (time_t nValue);
 CTerm* func (int nHead, ...);
 CTerm* unary (int nHead, CTerm * pTerm);
 CTerm* aggregate (int nHead, CTerm * pTerm);
@@ -73,18 +75,20 @@ using namespace sqlp;
 	const char * string;
 	long int integer;
 	int token;
+	time_t datetime;
 	sqlp::CTerm * term;
 	sqlp::CTable * table;
 	sqlp::CNameList * name;
 }
 
 /* variable types */
-%token <string> lCMD
-%token <string> lNAME
-%token <string> lSTRING
-%token <number> lNUMBER
-%token <number> lINTEGER
-%token <number> lBOOLEAN
+%token <string>   lCMD
+%token <string>   lNAME
+%token <string>   lSTRING
+%token <number>   lNUMBER
+%token <number>   lINTEGER
+%token <number>   lBOOLEAN
+%token <datetime> lDATETIME
 
 /* keywords */
 %token lAVG lSUM lCOUNT lMIN lMAX lFIRST lLAST
@@ -263,7 +267,7 @@ y_bool
 	| y_term lNEQ y_term			{ $$ = func(lNEQ, $1, $3, 0); }
 	| y_term lGEQ y_term			{ $$ = func(lGEQ, $1, $3, 0); }
 	| y_term lLEQ y_term			{ $$ = func(lLEQ, $1, $3, 0); }
-	| y_term lLIKE lSTRING			{ $$ = func(lLIKE, $1, strval($3), 0); }
+	| y_term lLIKE lSTRING			{ $$ = func(lLIKE, $1, value($3), 0); }
 	| y_term lIS lNOT lNULL			{ $$ = unary(lNOT, unary(lNULL, $1)); }
 	| y_term lIS lNULL				{ $$ = unary(lNULL, $1); }
 	| lNOT y_bool					{ $$ = unary(lNOT, $2); }
@@ -287,7 +291,8 @@ y_term
 	: lNUMBER						        { $$ = number($1); }
 	| lINTEGER						        { $$ = number($1); }
 	| lBOOLEAN						        { $$ = number($1); }
-	| lSTRING						        { $$ = strval($1); }
+	| lSTRING						        { $$ = value($1); }
+	| lDATETIME						        { $$ = time ($1); }
 	| y_column						        { $$ = $1; }
 	| y_term '+' y_term				        { $$ = func('+', $1, $3, 0); }
 	| y_term '-' y_term				        { $$ = func('+', $1, unary('-', $3), 0); }
@@ -381,25 +386,39 @@ column (const char * szSchema, const char * szTable, const char * szColumn)
 }
 //---------------------------------------------------------------------------
 CTerm*
+value (short nType , double dValue)
+{
+	assert (m_stmt);
+	return m_stmt->value (nType, dValue);
+}
+//---------------------------------------------------------------------------
+CTerm*
+value (const char * szValue)
+{
+	assert (m_stmt);
+	CTerm * pTerm = m_stmt->value(szValue);
+	return pTerm;
+}
+//---------------------------------------------------------------------------
+CTerm*
 number (double dValue)
 {
 	assert (m_stmt);
-	return m_stmt->value (dValue);
+	return m_stmt->value (SQL_DOUBLE, dValue);
 }
 //---------------------------------------------------------------------------
 CTerm*
 number (long int nValue)
 {
 	assert (m_stmt);
-	return m_stmt->value (nValue);
+	return m_stmt->value (SQL_INTEGER, nValue);
 }
 //---------------------------------------------------------------------------
 CTerm*
-strval (const char * szValue)
+time (time_t nValue)
 {
 	assert (m_stmt);
-	CTerm * pTerm = m_stmt->value(szValue);
-	return pTerm;
+	return m_stmt->time (nValue);
 }
 //---------------------------------------------------------------------------
 CTerm*

@@ -170,6 +170,10 @@ SOURCE=.\tableset.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\unary.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\yac.cpp
 # End Source File
 # Begin Source File

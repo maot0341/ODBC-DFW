@@ -71,6 +71,10 @@ public:
 	bool read (ULONG iRow, ULONG nRow, idl::typRecord &) const;
 	ULONG rows() const;
 
+	CSQLTypeInfo * get (short t)                      { return m_aData[t]; }
+	CSQLTypeInfo * operator[](short t)                { return m_aData[t]; }
+
+protected:
 	std::map<short,CSQLTypeInfo*> m_aData;
 	vector<short> m_aKeys;
 };

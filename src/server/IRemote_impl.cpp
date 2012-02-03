@@ -239,9 +239,9 @@ IStmt_impl::RETN (short nRetn, const CException * pExc)
 		return pRetn;
 	pRetn->aDiag.length(1);
 	idl::typDiagItem & raDiag = pRetn->aDiag[0];
-	raDiag.nError = pExc->nId;
-	strncpy (raDiag.SQLState, pExc->szState , 6);
-	raDiag.strError = (const char*)pExc->strText.c_str();
+	raDiag.nCode = pExc->nId;
+	strncpy (raDiag.szState, pExc->szState , 6);
+	raDiag.strText = (const char*)pExc->strText.c_str();
 	raDiag.strFile = (const char*)pExc->szFile;
 	raDiag.nLine = pExc->nLine;
 	return pRetn;
@@ -427,16 +427,16 @@ throw(::CORBA::SystemException)
 	}
 	catch (const CException & aErr)
 	{
-		throw IDLException (SQL_ERROR, aErr);
+		throw IDL(aErr);
 	}
 	catch (const string & strErr)
 	{
-		throw IDLException (SQL_ERROR, EXC("42000", 900, strErr.c_str()));
+		throw IDL(EXC("42000", 900, strErr.c_str()));
 //		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
 	}
 	catch (...)
 	{
-		throw IDLException (SQL_ERROR, EXC("42000", 900, "Syntax error or access violation"));
+		throw IDL(EXC("42000", 900, "Syntax error or access violation"));
 //		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
 	}
 	return RETN (SQL_SUCCESS);

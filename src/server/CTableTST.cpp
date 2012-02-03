@@ -35,12 +35,12 @@
 CTableTST::CTableTST (const char * szName)
 : CTableImpl(szName)
 {
-//	column (SQL_GUID,     "rid", 128, 0, SQL_NO_NULLS);
-	column (SQL_INTEGER,  "rid", 128, 0, SQL_NO_NULLS);
-	column (SQL_CHAR,     "a1",  128, 0, SQL_NULLABLE);
-	column (SQL_DATETIME, "t1",  128, 0, SQL_NULLABLE);
-	column (SQL_INTEGER,  "n1",  128, 0, SQL_NULLABLE);
-	column (SQL_DOUBLE,   "d1",  128, 0, SQL_NULLABLE);
+//	column (SQL_GUID,      "rid", 128, 0, SQL_NO_NULLS);
+	column (SQL_INTEGER,   "rid", 128, 0, SQL_NO_NULLS);
+	column (SQL_CHAR,      "a1",  128, 0, SQL_NULLABLE);
+	column (SQL_TIMESTAMP, "t1",  128, 0, SQL_NULLABLE);
+	column (SQL_INTEGER,   "n1",  128, 0, SQL_NULLABLE);
+	column (SQL_DOUBLE,    "d1",  128, 0, SQL_NULLABLE);
 	m_nRows = 100;
 	if (szName[0] == 'c')
 		m_nRows = 100000;
@@ -117,13 +117,28 @@ CTableTST::read (ULONG iRow, ULONG nRow, idl::typRecord & crbRecord) const
 bool
 CTableTST::get (vector<ULONG> & raIndex, int nHeader, int nCol, CTerm* pValue) const
 {
-	if (nHeader == '=')
+	assert (pValue);
 	if (nCol == 0)
 	{
+		ULONG nRows = rows();
 		int nValue = pValue->asInteger();
-		raIndex.clear();
-		idx::append (raIndex, nValue);
-		return true;
+		if (nHeader == '=')
+		{
+			idx::assigne (raIndex, nValue);
+			return true;
+		}
+		if (nHeader == '<')
+		{
+			int nValue = pValue->asInteger();
+			idx::assigne (raIndex, 0, nValue);
+			return true;
+		}
+		if (nHeader == '>')
+		{
+			int nValue = pValue->asInteger();
+			idx::assigne (raIndex, nValue, nRows);
+			return true;
+		}
 	}
 	return false;
 }

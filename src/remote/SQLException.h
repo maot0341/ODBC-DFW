@@ -22,30 +22,27 @@
 #define __SQLEXCEPTION_H__
 
 
-#include <string>
+#include <OB/CORBA.h>
+#include <idl/IRemote_idl.h>
 #include <stdx/debug.h>
+#include <string>
 
 using namespace std;
 //---------------------------------------------------------------------------
-// SQLTables QUERY
+// Debug Info
 //---------------------------------------------------------------------------
-class CSQLException
+class CDebugInfo
 {
 public:
-	CSQLException (const char * file, size_t line);
-	virtual ~CSQLException();
-	const CSQLException & set (const char * szState, long nError, const char * szMessage, ...);
-	const char * text() const { return m_strText.c_str(); }
-	const char * state() const { return m_szState; }
-	long code() const { return m_nCode; }
+	CDebugInfo (const char * file, size_t line) : m_szFile(file), m_nLine(line) {}
+	const idl::typDiagItem  & create (const char * szState, long nError, const char * szMessage, ...);
 
 protected:
-	char m_szState[6];
-	long m_nCode;
-	string m_strText;
 	const char * m_szFile;
 	size_t m_nLine;
+	idl::typDiagItem  m_aDiag;
 };
-#define EXC CSQLException(__FILE__,__LINE__).set
+
+#define EXC CDebugInfo(__FILE__,__LINE__).create
 //---------------------------------------------------------------------------
 #endif

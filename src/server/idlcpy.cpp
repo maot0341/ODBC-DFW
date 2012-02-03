@@ -464,15 +464,14 @@ idl::typTerm IDL (sqlp::term_t eTerm)
 }
 #endif
 //---------------------------------------------------------------------------
-idl::typException  IDLException (short nRetn, const CException & aExc)
+idl::typException  IDL(const CException & aExc)
 {
 	idl::typException crbExc;
-	crbExc.nRetn = nRetn;
 	crbExc.aDiag.length(1);
 	idl::typDiagItem & raDiag = crbExc.aDiag[0];
-	raDiag.nError = aExc.nId;
-	strncpy (raDiag.SQLState, aExc.szState , 6);
-	raDiag.strError = (const char*)aExc.strText.c_str();
+	raDiag.nCode = aExc.nId;
+	strncpy (raDiag.szState, aExc.szState , 6);
+	raDiag.strText = (const char*)aExc.strText.c_str();
 	raDiag.strFile = (const char*)aExc.szFile;
 	raDiag.nLine = aExc.nLine;
 	return crbExc;
