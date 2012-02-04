@@ -59,7 +59,7 @@ CDatabase::Instance()
 CDatabase::CDatabase()
 {
 //	assert (paEnv);
-	m_strPath = "D:\\jvater\\odbc\\data";
+	m_strPath = "C:\\user\\odbc\\data";
 //	m_strPath = "D:\\gow\\hasy\\hasyjv\\prj\\ems\\ProgMod\\wrk";
 }
 //---------------------------------------------------------------------------

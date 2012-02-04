@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 stdx.lib sqlp.lib ob.lib jtc.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /map /debug /debugtype:both /machine:I386 /pdbtype:sept /libpath:"..\..\lib\Release" /libpath:"$(CORBA_HOME)\Win32Release\OB\lib"
+# ADD LINK32 ob.lib jtc.lib sqlp.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /map /debug /debugtype:both /machine:I386 /pdbtype:sept /libpath:"..\..\lib\Release" /libpath:"$(CORBA_HOME)\Win32Release\OB\lib"
 
 !ELSEIF  "$(CFG)" == "server - Win32 Debug"
 
@@ -74,7 +74,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 stdx.lib sqlp.lib obd.lib jtcd.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /out:"..\..\bin\Debug\server.exe" /pdbtype:sept /libpath:"..\..\lib\Debug" /libpath:"$(CORBA_HOME)\Win32Debug\OB\lib"
+# ADD LINK32 obd.lib jtcd.lib sqlp.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /out:"..\..\bin\Debug\server.exe" /pdbtype:sept /libpath:"..\..\lib\Debug" /libpath:"$(CORBA_HOME)\Win32Debug\OB\lib"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -202,6 +202,14 @@ SOURCE=.\IRemote_impl.h
 # Begin Source File
 
 SOURCE=..\idl\IRemote_skel_idl.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\stdx\regexpr.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\stdx\regexpr.h
 # End Source File
 # Begin Source File
 
