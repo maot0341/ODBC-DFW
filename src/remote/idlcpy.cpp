@@ -145,26 +145,32 @@ void idlcpy (long nValue, short nType, void* pValue, long nLen, long * pInd)
 	assert (false);
 }
 //---------------------------------------------------------------------------
-void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd)
+time_t SQL2UTC (double dTime)
+{
+	static const double dSecPerDay = 3600 * 24;
+	return dTime * dSecPerDay;
+}
+//---------------------------------------------------------------------------
+void idltime (double dTime, short nType, void* pValue, long nLen, long * pInd)
 {
 	if (nType == SQL_C_LONG)
 	{
-		SQLWriteNum (long, dValue, pValue, pInd);
+		SQLWriteNum (long, dTime, pValue, pInd);
 		return;
 	}
 	if (nType == SQL_C_SHORT)
 	{
-		SQLWriteNum (short, dValue, pValue, pInd);
+		SQLWriteNum (short, dTime, pValue, pInd);
 		return;
 	}
 	if (nType == SQL_C_FLOAT)
 	{
-		SQLWriteNum (float, dValue, pValue, pInd);
+		SQLWriteNum (float, dTime, pValue, pInd);
 		return;
 	}
 	if (nType == SQL_C_DOUBLE)
 	{
-		SQLWriteNum (double, dValue, pValue, pInd);
+		SQLWriteNum (double, dTime, pValue, pInd);
 		return;
 	}
 	if (nType == SQL_TIMESTAMP)
@@ -172,7 +178,7 @@ void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd)
 		TIMESTAMP_STRUCT * pTime = (TIMESTAMP_STRUCT*)pValue;
 		if (pTime)
 		{
-			const time_t nTime = dValue;
+			const time_t nTime = SQL2UTC(dTime);
 			struct tm * pTM = localtime (&nTime);
 			if (pTM == 0)
 			{
@@ -195,7 +201,7 @@ void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd)
 	}
 	if (nType == SQL_C_CHAR)
 	{
-		const time_t nTime = dValue;
+		const time_t nTime = SQL2UTC(dTime);
 		struct tm * pTime = localtime (&nTime);
 		char * szValue = (char*) pValue;
 		size_t n = strftime (szValue, nLen, "%Y-%m-%d %H:%M:%S", pTime);

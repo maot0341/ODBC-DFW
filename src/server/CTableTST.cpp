@@ -90,7 +90,7 @@ CTableTST::read (ULONG iRec, CRecord & raRecord) const
 			aTime.tm_mon = 1 - 1;
 			aTime.tm_year = 2000 - 1900;
 			static time_t nTime = mktime (&aTime);
-			raValue = nTime + iRec  * 3600;
+			raValue = SQLTime (nTime + iRec  * 3600);
 		}
 		else if (CTerm::isFloat (nType))
 		{
@@ -124,19 +124,19 @@ CTableTST::get (vector<ULONG> & raIndex, int nHeader, int nCol, CTerm* pValue) c
 		int nValue = pValue->asInteger();
 		if (nHeader == '=')
 		{
-			idx::assigne (raIndex, nValue);
+			idx::assign (raIndex, nValue);
 			return true;
 		}
 		if (nHeader == '<')
 		{
 			int nValue = pValue->asInteger();
-			idx::assigne (raIndex, 0, nValue);
+			idx::assign (raIndex, 0, nValue);
 			return true;
 		}
 		if (nHeader == '>')
 		{
 			int nValue = pValue->asInteger();
-			idx::assigne (raIndex, nValue, nRows);
+			idx::assign (raIndex, nValue, nRows);
 			return true;
 		}
 	}

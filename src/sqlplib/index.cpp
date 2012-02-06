@@ -171,7 +171,7 @@ vector<ULONG> & append (vector<ULONG> & raIndex, ULONG i, ULONG n)
 	return raIndex;
 }
 //---------------------------------------------------------------------------
-vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i, ULONG n)
+vector<ULONG> & assign (vector<ULONG> & raIndex, ULONG i, ULONG n)
 {
 	raIndex.clear();
 	raIndex.push_back (i);
@@ -179,7 +179,7 @@ vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i, ULONG n)
 	return raIndex;
 }
 //---------------------------------------------------------------------------
-vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i)
+vector<ULONG> & assign (vector<ULONG> & raIndex, ULONG i)
 {
 	raIndex.clear();
 	raIndex.push_back (i);

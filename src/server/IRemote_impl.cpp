@@ -40,10 +40,12 @@ using namespace stdx;
 //---------------------------------------------------------------------------
 extern CORBA::ORB_var orb;
 static time_t ta;
-
-
-
-
+//---------------------------------------------------------------------------
+#ifdef  NDEBUG
+#	define TRACEFN(s) ((void)0)
+#else
+#	define TRACEFN(s) trace(s##" \t%s:%d\n", __FILE__, __LINE__) 
+#endif
 //---------------------------------------------------------------------------
 // Host
 //---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ void
 IHost_impl::shutdown (bool wait_for_completion)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IHost::shutdown");
 	printf ("CORBA-Call: shutdown\n");
 	orb->shutdown (wait_for_completion);
 }
@@ -67,6 +70,7 @@ void
 IHost_impl::ping()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IHost::ping");
 	printf ("CORBA-Call (IHost 0x%x): ping\n", this);
 }
 //---------------------------------------------------------------------------
@@ -74,6 +78,7 @@ void
 IHost_impl::exec (const char * szCmd)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IHost::exec");
 	printf ("CORBA-Call: %s\n", szCmd);
 	if (strcmp (szCmd, "test") == 0)
 	{
@@ -126,6 +131,7 @@ void
 IConnection_impl::logout()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IConnection::logout");
 	printf ("0x%x  IConnection: logout\n", this);
 	CORBA::ULong nRef = _OB_getRefCount();
 	PortableServer::POA_var poa = _default_POA();
@@ -138,6 +144,7 @@ void
 IConnection_impl::ping()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IConnection::ping");
 	printf ("0x%x  IConnection: ping\n", this);
 }
 //---------------------------------------------------------------------------
@@ -145,6 +152,7 @@ idl::IStmt_ptr
 IConnection_impl::SQLAllocStmt()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("IConnection::SQLAllocStmt");
 	printf ("0x%x  IConnection: SQLAllocStmt\n", this);
 	IStmt_impl * pStmt = new IStmt_impl (this);
 	PortableServer::ServantBase_var vImpl = pStmt;
@@ -173,6 +181,7 @@ void
 IStmt_impl::ping()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("ping");
 	printf ("0x%x  IStmt: ping\n", this);
 }
 //---------------------------------------------------------------------------
@@ -180,6 +189,7 @@ void
 IStmt_impl::destroy()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("destroy");
 	printf ("0x%x  IStmt: destroy\n", this);
 //	return;
 	CORBA::ULong nRef = _OB_getRefCount();
@@ -193,6 +203,7 @@ void
 IStmt_impl::exec (const char * szCmd)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("exec");
 	printf ("CORBA-Call: %s\n", szCmd);
 	if (strcmp (szCmd, "test") == 0)
 	{
@@ -207,6 +218,7 @@ void
 IStmt_impl::desc (idl::typHeader & crbHeader)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("desc");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 	{
@@ -255,6 +267,7 @@ IStmt_impl::SQLTables
 , const char* szType)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLTables");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
@@ -271,6 +284,7 @@ IStmt_impl::SQLColumns
 , const char* szColumn)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLColumns");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
@@ -289,6 +303,7 @@ IStmt_impl::SQLSpecialColumns
 )
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLSpecialColumns");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
@@ -307,6 +322,7 @@ IStmt_impl::SQLStatistics
 )
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLStatistics");
 	idl::RETN_var vRetn = new idl::RETN;
 	vRetn->nRetn = SQL_INVALID_HANDLE;
 	CDatabase * pDatabase = CDatabase::Instance();
@@ -321,6 +337,7 @@ idl::RETN*
 IStmt_impl::SQLParams (const idl::typParamset & crbParamset)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLParams");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -353,6 +370,7 @@ idl::RETN*
 IStmt_impl::SQLPrepare(const char* szSQL)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLPrepare");
 	clear();
 	try
 	{
@@ -375,6 +393,7 @@ idl::RETN*
 IStmt_impl::SQLExecute ()
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLExecute");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -386,6 +405,7 @@ idl::RETN*
 IStmt_impl::SQLNumResultCols (short & rnColumns)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLNumResultCols");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -397,6 +417,7 @@ idl::RETN*
 IStmt_impl::SQLGetTypeInfo (short nDataType)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLGetTypeInfo");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
@@ -447,6 +468,7 @@ idl::RETN*
 IStmt_impl::SQLFetchRef (ULONG iRow, ULONG nRow, idl::typRecord & raRecord)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLFetchRef");
 	ta = time(0);
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
@@ -463,6 +485,7 @@ idl::RETN*
 IStmt_impl::SQLDescribeParams (idl::typParamset & raParamset)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLDescribeParams");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -497,6 +520,7 @@ IStmt_impl::SQLColAttribute
 , idl::typVariant_out crbValue)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLColAttribute");
 	crbValue = new idl::typVariant;
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
@@ -516,6 +540,7 @@ IStmt_impl::SQLDescribeCol
 , CORBA::Short_out crbNullable)
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLDescribeCol");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -539,6 +564,7 @@ IStmt_impl::SQLError
 )
 throw(::CORBA::SystemException)
 {
+	TRACEFN("SQLError");
 	const CSQLError::record_t * pRecord = m_aError.fetch();
 	if (pRecord)
 	{

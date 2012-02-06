@@ -106,6 +106,10 @@ class CTableSet;
 //---------------------------------------------------------------------------
 //enum term_t { TermBOOL, TermINT, TermFLOAT, TermTIME, TermVCHAR, TermTYP};
 //---------------------------------------------------------------------------
+short SQLTypeOrder (short nType);
+vector<string> SQLNameList (const char * szList);
+double SQLTime (time_t t);
+
 string id(const CObject*);
 string stringf (const char * szFormat, ...);
 void format (vector<CValue> & record, const vector<CTerm*> & terms);
@@ -465,7 +469,7 @@ public:
 //	CValue * value (long int);
 //	CValue * value (const char *);
 	CValue * time  (const char *);
-	CValue * time  (time_t);
+	CValue * time  (double);
 	CUnary * unary (int head, CTerm *);
 	CFunction * func (int head, va_list args);
 	CParam * param();

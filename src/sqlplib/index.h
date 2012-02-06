@@ -38,8 +38,8 @@ vector<ULONG> & append (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
 vector<ULONG> & remove (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
 vector<ULONG> & insert (vector<ULONG> & raIndex, ULONG i, ULONG n=1);
 
-vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i, ULONG n);
-vector<ULONG> & assigne (vector<ULONG> & raIndex, ULONG i);
+vector<ULONG> & assign (vector<ULONG> & raIndex, ULONG i, ULONG n);
+vector<ULONG> & assign (vector<ULONG> & raIndex, ULONG i);
 
 vector<ULONG> any2sub (const vector<ULONG> &);
 vector<ULONG> idx2sub (const vector<ULONG> &);

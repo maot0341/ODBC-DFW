@@ -23,6 +23,7 @@
 #include "SQLTables.h"
 #include "idlcpy.h"
 #include <stdx/regexpr.h>
+#include <stdx/utils.h>
 
 using namespace stdx;
 //---------------------------------------------------------------------------
@@ -61,15 +62,6 @@ CSQLTablesData::record (const char * szCatalog
 
 
 //---------------------------------------------------------------------------
-bool match (const string & s1, const char * szExpr)
-{
-	if (!szExpr || *szExpr == 0)
-		return true;
-	CRegExpr aExpr(szExpr);
-	return aExpr.match (s1.c_str());
-	return true;
-}
-//---------------------------------------------------------------------------
 //CSQLTables CSQLTables::ms_aInstance;
 //---------------------------------------------------------------------------
 CSQLTables::CSQLTables 
@@ -90,34 +82,20 @@ CSQLTables::CSQLTables
 	m_pData = pData;
 	ASSUME (m_pData);
 
-	CRegExpr aExprCatalog (szCatalog);
-	CRegExpr aExprSchema (szSchema);
-	CRegExpr aExprTable (szTable);
-	CRegExpr aExprType (szType);
+	CRegExp aExprCatalog (szCatalog,"%", "_");
+	CRegExp aExprSchema (szSchema,"%", "_");
+	CRegExp aExprTable (szTable,"%", "_");
 
 	const ULONG nRows = m_pData->rows();
 	ULONG i;
-	if (szCatalog && !szCatalog[0])
-		szCatalog = 0;
-	if (szSchema && !szSchema[0])
-		szSchema = 0;
-	if (szTable && !szTable[0])
-		szTable = 0;
-	if (szType && !szType[0])
-		szType = 0;
-	if (szCatalog)
-		m_strCatalog = szCatalog;
-	if (szSchema)
-		m_strSchema = szSchema;
-	if (szTable)
-		m_strTable = szTable;
-	if (szType)
-		m_strType = szType;
-	if (!szCatalog && !szSchema && !szTable && !szType)
-	{
-		m_aFilter.push_back(0);
-		m_aFilter.push_back(nRows);
-	}
+	m_strCatalog = STRNVL(szCatalog);
+	m_strSchema = STRNVL(szSchema);
+	m_strTable = STRNVL(szTable);
+	m_strType = STRNVL(szType);
+	vector<string> aType = SQLNameList (szType);
+//	if (!STRLEN(szCatalog) && !STRLEN(szSchema) && !STRLEN(szTable) && !aType.size())
+	if (aExprCatalog.empty() && aExprSchema.empty() && aExprTable.empty() && aType.empty())
+		idx::assign (m_aFilter, 0, nRows);
 	else
 	for (i=0; i<nRows; i++)
 	{
@@ -125,8 +103,8 @@ CSQLTables::CSQLTables
 		if (aExprCatalog.match (aRecord.catalog))
 		if (aExprSchema.match (aRecord.schema))
 		if (aExprTable.match (aRecord.tablename))
-		//if (aExprType.match (aRecord.tabletype))
-		if (!szType || strstr (szType, aRecord.tabletype.c_str()))
+//		if (!STRLEN(szType) || stristr (szType, aRecord.tabletype.c_str()))
+		if (aType.empty() || CONTAINS (aType, aRecord.tabletype.c_str()))
 			idx::append (m_aFilter, i);
 	}
 //	m_pIter = new idx::iterator (m_aFilter);

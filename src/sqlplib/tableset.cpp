@@ -187,7 +187,7 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 				if (pTable->get (aSub, '>', cf, tf))
 					return aIndex |= aSub;
 			}
-			idx::assigne (aIndex, 0, nRows);
+			idx::assign (aIndex, 0, nRows);
 			return aIndex;
 		}
 		if (nHead == lIN)
@@ -259,7 +259,7 @@ filter1 (const char * szTable, CTable * pTable, CTerm * pTerm, const CDomain & a
 			return aIndex;
 		}
 	}
-	return idx::assigne (aIndex, 0, pTable->rows());
+	return idx::assign (aIndex, 0, pTable->rows());
 }
 //---------------------------------------------------------------------------
 // table-reference - item

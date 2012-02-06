@@ -36,6 +36,7 @@ class CFuncLIKE : public CFunction
 public:
 	CFuncLIKE (int head, const vector<CTerm*> & args);
 	CFuncLIKE (int head, va_list &);
+
 protected:
 	vector<string> m_aToken;
 };

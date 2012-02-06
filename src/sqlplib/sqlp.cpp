@@ -59,7 +59,52 @@ using namespace stdx;
 namespace sqlp {
 
 //---------------------------------------------------------------------------
-short TypeOrder (short nType)
+double SQLTime (time_t nTime)
+{
+	static const double dSecPerDay = 3600*24;
+	return ((double)nTime) / dSecPerDay;
+}
+//---------------------------------------------------------------------------
+vector<string> SQLNameList (const char * szList)
+{
+	vector<string> aList;
+	if (!STRLEN(szList))
+		return aList;
+	string strName;
+	const char * a = szList;
+	const char * k;
+	const char * e;
+	while (true)
+	{
+		while (*a && isspace(*a))
+			a++;
+		if (*a == 0)
+			break;
+		k = strchr (a, ',');
+		if (*a == '\'')
+		{
+			a++;
+			e = strchr (a, '\'');
+			assert (e);
+			assert (k == 0 || e < k);
+			strName.assign (a, e-a);
+		}
+		else
+		{
+			e = (k == 0) ? a + strlen(a) : k;
+			while (--e >= a && isspace(*e));
+			strName.assign (a, e-a+1);
+		}
+		if (!strName.empty())
+			aList.push_back (strName);
+		if (k == 0)
+			break;
+		a = k + 1;
+	}
+	return aList;
+}
+//---------------------------------------------------------------------------
+short SQLTypeOrder (short nType)
 {
 	switch (nType)
 	{
@@ -1150,7 +1195,7 @@ CFunction::type (const vector<CTerm*> & aArgs)
 		short nTerm = pTerm->type();
 		if (nTerm == SQL_UNKNOWN_TYPE)
 			continue;
-		if (TypeOrder (nTerm) <= TypeOrder(nType))
+		if (SQLTypeOrder (nTerm) <= SQLTypeOrder(nType))
 			continue;
 		nType = nTerm;
 	}
@@ -2051,7 +2096,7 @@ CStatement::value (const char * szValue)
 #endif
 //---------------------------------------------------------------------------
 CValue *
-CStatement::time (time_t nTime)
+CStatement::time (double dTime)
 {
 	vector<CObject*>::iterator iObject = m_aMemory.begin();
 	for (; iObject!=m_aMemory.end(); iObject++)
@@ -2061,10 +2106,10 @@ CStatement::time (time_t nTime)
 			continue;
 		short nType = pTerm->type();
 		if (CTerm::isDateTime (nType))
-		if (((time_t)pTerm->asDouble()) == nTime)
+		if ((pTerm->asDouble()) == dTime)
 			return pTerm;
 	}
-	CValue * pTerm = new CValue (SQL_DATETIME, nTime);
+	CValue * pTerm = new CValue (SQL_DATETIME, dTime);
 	m_aMemory.push_back (pTerm);
 	return pTerm;
 }
@@ -2072,6 +2117,7 @@ CStatement::time (time_t nTime)
 CValue *
 CStatement::time (const char * szValue)
 {
+	static const double dSecPerDay = 3600 * 24;
 	struct tm aTime;
 	memset (&aTime, 0, sizeof(aTime));
 	const int nRead = sscanf (szValue, "%d-%d-%d %d:%d:%d"
@@ -2081,7 +2127,7 @@ CStatement::time (const char * szValue)
 	aTime.tm_year -= 1900;
 	aTime.tm_mon  -= 1;
 	const time_t nTime = mktime (&aTime);
-	return time (nTime);
+	return time (nTime / dSecPerDay);
 }
 //---------------------------------------------------------------------------
 CTerm *
@@ -2494,7 +2540,7 @@ CStatement::prepare (CFunction & aFunc)
 
 		short nTerm = pTerm->type();
 		if (nTyp != SQL_UNKNOWN_TYPE)
-		if (TypeOrder (nTerm) <= TypeOrder(nTyp))
+		if (SQLTypeOrder (nTerm) <= SQLTypeOrder(nTyp))
 			continue;
 		if (nTerm != SQL_UNKNOWN_TYPE)
 			nTyp = nTerm;

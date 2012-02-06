@@ -137,9 +137,8 @@ void idlcpy (idl::typVariant & crbValue, const CTerm * pValue)
 	}
 	if (CTerm::isDateTime (nType))
 	{
-		////@@@@ todo: Umrechnung
-		const time_t nTime = pValue->asInteger();
-		crbValue.aValue.dTime (nTime);
+		double dTime = pValue->asDouble();
+		crbValue.aValue.dTime (dTime);
 		return;
 	}
 	if (CTerm::isString (nType))

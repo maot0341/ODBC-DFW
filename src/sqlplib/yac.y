@@ -41,7 +41,7 @@ CTerm* number (long int nValue);
 CTerm* value (const char * szValue);
 CTerm* value (short type, double dValue);
 CTerm* time (const char * szValue);
-CTerm* time (time_t nValue);
+CTerm* time (double dValue);
 CTerm* func (int nHead, ...);
 CTerm* unary (int nHead, CTerm * pTerm);
 CTerm* aggregate (int nHead, CTerm * pTerm);
@@ -415,10 +415,10 @@ number (long int nValue)
 }
 //---------------------------------------------------------------------------
 CTerm*
-time (time_t nValue)
+time (double dValue)
 {
 	assert (m_stmt);
-	return m_stmt->time (nValue);
+	return m_stmt->time (dValue);
 }
 //---------------------------------------------------------------------------
 CTerm*

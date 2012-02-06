@@ -21,6 +21,7 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <map>
@@ -29,6 +30,7 @@ using namespace std;
 
 #define BIT(i) (1 << (i))
 #define DIM(arr) (sizeof(arr) / sizeof(arr[0]))
+#define STRLEN(s) (s && *s)
 #define NVL(v,n) (((v)==0) ? (n) : (v))
 #define LIMIT(v,g1,g2)  (((v) < (g1)) ? (g1) : ((v) > (g2)) ? g2 : (v))
 #define FIND(v,x) std::find ((v).begin(), (v).end(), x)
@@ -118,6 +120,26 @@ inline
 string join (const char* s1, const char* s2, const char* delem)
 {
 	return join (STRNVL(s1), STRNVL(s2), STRNVL(delem));
+}
+//---------------------------------------------------------------------------
+inline
+const char *
+stristr (const char * s1, const char * s2)
+{
+	if (!STRLEN(s1))
+		return 0;
+	if (!STRLEN(s2))
+		return s1;
+	const char * p1;
+	const size_t n1 = strlen(s1);
+	const size_t n2 = strlen(s2);
+	const char * e1 = s1 + (n1 - n2);
+	for (p1=s1; p1<=e1; p1++)
+	{
+		if (strnicmp (p1,s2,n2) == 0)
+			return p1;
+	}
+	return 0;
 }
 //---------------------------------------------------------------------------
 } // namespace stdx
