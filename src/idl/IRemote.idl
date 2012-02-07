@@ -173,40 +173,52 @@ module idl
 	const string srvtName_IHost = "dbhost";
 	interface IHost
 	{
-		void shutdown (in boolean wait_for_completion);
-		IConnection login (in string auth);
-		void ping();
-		void exec (in string cmd);
+		void shutdown (in boolean wait_for_completion)
+		raises (typException);
+		IConnection login (in string auth)
+		raises (typException);
+		void ping()
+		raises (typException);
+		void exec (in string cmd)
+		raises (typException);
 	};
 	////-----------------------------------------
 	interface IConnection
 	{
 
 		IStmt SQLAllocStmt();
-		void logout();
-		void ping();
+		void logout()
+		raises (typException);
+		void ping()
+		raises (typException);
 	};
 	////-----------------------------------------
 	interface IStmt
 	{
-		void ping();
-		void exec (in string cmd);
-		void destroy();
-		void desc(inout typHeader header);
+		void ping()
+		raises (typException);
+		void exec (in string cmd)
+		raises (typException);
+		void destroy()
+		raises (typException);
+		void desc(inout typHeader header)
+		raises (typException);
 
 		RETN SQLTables
 		( in string catalog
 		, in string schema
 		, in string table
 		, in string type
-		);
+		)
+		raises (typException);
 
 		RETN SQLColumns
 		( in string catalog
 		, in string schema
 		, in string table
 		, in string column
-		);
+		)
+		raises (typException);
 
 		RETN SQLSpecialColumns
 		( in string catalog
@@ -214,7 +226,8 @@ module idl
 		, in string table
 		, in short scope
 		, in short nullable
-		);
+		)
+		raises (typException);
 
 		RETN SQLStatistics
 		( in string catalog
@@ -222,24 +235,34 @@ module idl
 		, in string table
 		, in short nUnique
 		, in short nReserved
-		);
+		)
+		raises (typException);
 
-		RETN SQLParams (in typParamset params);
-		RETN SQLPrepare (in string sql);
-		RETN SQLExecute ();
-		RETN SQLNumResultCols (out short columns);
-		RETN SQLGetTypeInfo (in short datatyp);
-		RETN SQLFetch (in ULONG iRow, in ULONG nRow, out typRecord record) raises (typException);
-		RETN SQLDescribeParams (inout typParamset params);
+		RETN SQLParams (in typParamset params)
+		raises (typException);
+		RETN SQLPrepare (in string sql)
+		raises (typException);
+		RETN SQLExecute ()
+		raises (typException);
+		RETN SQLNumResultCols (out short columns)
+		raises (typException);
+		RETN SQLGetTypeInfo (in short datatyp)
+		raises (typException);
+		RETN SQLFetch (in ULONG iRow, in ULONG nRow, out typRecord record)
+		raises (typException);
+		RETN SQLDescribeParams (inout typParamset params)
+		raises (typException);
 
 		// faster then (out typRecord record)
-		RETN SQLFetchRef (in ULONG iRow, in ULONG nRow, inout typRecord record); 
+		RETN SQLFetchRef (in ULONG iRow, in ULONG nRow, inout typRecord record)
+		raises (typException);
 
 		RETN SQLColAttribute
 		( in unsigned short col
 		, in unsigned short attr
 		, out typVariant value
-		);
+		)
+		raises (typException);
 
 		RETN SQLDescribeCol
 		( in unsigned short col
@@ -248,7 +271,8 @@ module idl
 		, out unsigned long columnsize
 		, out short decimaldigits
 		, out short nullable
-		);
+		)
+		raises (typException);
 
 	};
 };

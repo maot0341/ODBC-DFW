@@ -41,11 +41,28 @@ using namespace stdx;
 extern CORBA::ORB_var orb;
 static time_t ta;
 //---------------------------------------------------------------------------
+#define TRACEFN(s) trace("%-20s  %s:%d\n", (char*)s, __FILE__, __LINE__) 
+//---------------------------------------------------------------------------
 #ifdef  NDEBUG
-#	define TRACEFN(s) ((void)0)
+#	define TRY(s) try {
 #else
-#	define TRACEFN(s) trace(s##" \t%s:%d\n", __FILE__, __LINE__) 
+#	define TRY(s) try { if(s) trace("%-20s  %s:%d\n", (char*)s, __FILE__, __LINE__)
 #endif
+//---------------------------------------------------------------------------
+#	define EXCEPTION } \
+ 	catch (const CException & aExc)	\
+	{ \
+		throw IDL(aExc); \
+	} \
+	catch (const string & strErr) \
+	{ \
+		throw IDL(EXC("42000", 900, strErr.c_str())); \
+	} \
+	catch (...) \
+	{ \
+		throw IDL(EXC("42000", 900, "Syntax error or access violation")); \
+	} \
+
 //---------------------------------------------------------------------------
 // Host
 //---------------------------------------------------------------------------
@@ -61,25 +78,27 @@ void
 IHost_impl::shutdown (bool wait_for_completion)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IHost::shutdown");
+	TRY("shutdown");
 	printf ("CORBA-Call: shutdown\n");
 	orb->shutdown (wait_for_completion);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IHost_impl::ping()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IHost::ping");
-	printf ("CORBA-Call (IHost 0x%x): ping\n", this);
+	TRY("IHost::ping");
+//	printf ("CORBA-Call (IHost 0x%x): ping\n", this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IHost_impl::exec (const char * szCmd)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IHost::exec");
-	printf ("CORBA-Call: %s\n", szCmd);
+	TRY("exec");
+//	printf ("CORBA-Call: %s\n", szCmd);
 	if (strcmp (szCmd, "test") == 0)
 	{
 		CDatabase * pDB = CDatabase::Instance();
@@ -92,17 +111,20 @@ throw(::CORBA::SystemException)
 		return;
 	}
 	puts("exec <cmd> ?!");
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::IConnection_ptr
 IHost_impl::login (const char * szAuth)
 throw(::CORBA::SystemException)
 {
-	printf ("CORBA-Call (IHost): login\n");
+	TRY("login");
+//	printf ("CORBA-Call (IHost): login\n");
 	IConnection_impl * pConnection = new IConnection_impl();
 	PortableServer::ServantBase_var vImpl = pConnection;
 	idl::IConnection_var vConnection = pConnection->_this();
 	return vConnection._retn();
+	EXCEPTION
 }
 
 //---------------------------------------------------------------------------
@@ -110,12 +132,15 @@ throw(::CORBA::SystemException)
 //---------------------------------------------------------------------------
 IConnection_impl::IConnection_impl()
 {
-	printf ("0x%x  IConnection_impl\n", this);
+	TRY("IConnection_impl");
+//	printf ("0x%x  IConnection_impl\n", this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 IConnection_impl::~IConnection_impl()
 {
-	printf ("0x%x  ~IConnection_impl\n", this);
+	TRY("~IConnection_impl");
+//	printf ("0x%x  ~IConnection_impl\n", this);
 	list<IStmt_impl*>::iterator iStmt = m_aStmtList.begin();
 	for (; iStmt != m_aStmtList.end(); ++iStmt)
 	{
@@ -125,86 +150,96 @@ IConnection_impl::~IConnection_impl()
 		pStmt->m_pDBC = 0;
 		pStmt->destroy();
 	}
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IConnection_impl::logout()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IConnection::logout");
-	printf ("0x%x  IConnection: logout\n", this);
+	TRY("logout");
+//	printf ("0x%x  IConnection: logout\n", this);
 	CORBA::ULong nRef = _OB_getRefCount();
 	PortableServer::POA_var poa = _default_POA();
 	PortableServer::ObjectId_var oid = poa->servant_to_id(this);
 	poa->deactivate_object(oid);
 	oid._retn();
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IConnection_impl::ping()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IConnection::ping");
-	printf ("0x%x  IConnection: ping\n", this);
+	TRY("ping");
+//	printf ("0x%x  IConnection: ping\n", this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::IStmt_ptr
 IConnection_impl::SQLAllocStmt()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("IConnection::SQLAllocStmt");
-	printf ("0x%x  IConnection: SQLAllocStmt\n", this);
+	TRY("SQLAllocStmt");
+//	printf ("0x%x  IConnection: SQLAllocStmt\n", this);
 	IStmt_impl * pStmt = new IStmt_impl (this);
 	PortableServer::ServantBase_var vImpl = pStmt;
 	idl::IStmt_var vStmt = pStmt->_this();
 	return vStmt._retn();
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 // Stmt -- Interface
 //---------------------------------------------------------------------------
 IStmt_impl::IStmt_impl(IConnection_impl *pDBC)
 {
-	printf ("0x%x  IStmt_impl\n", this);
+	TRY("IStmt_impl");
+//	printf ("0x%x  IStmt_impl\n", this);
 	m_pDBC = pDBC;
 	if (m_pDBC)
 		m_pDBC->m_aStmtList.push_back(this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 IStmt_impl::~IStmt_impl()
 {
-	printf ("0x%x  ~IStmt_impl\n", this);
+	TRY("~IStmt_impl");
+//	printf ("0x%x  ~IStmt_impl\n", this);
 	if (m_pDBC)
 		m_pDBC->m_aStmtList.remove (this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IStmt_impl::ping()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("ping");
-	printf ("0x%x  IStmt: ping\n", this);
+	TRY("ping");
+//	printf ("0x%x  IStmt: ping\n", this);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IStmt_impl::destroy()
 throw(::CORBA::SystemException)
 {
-	TRACEFN("destroy");
-	printf ("0x%x  IStmt: destroy\n", this);
+	TRY("destroy");
+//	printf ("0x%x  IStmt: destroy\n", this);
 //	return;
 	CORBA::ULong nRef = _OB_getRefCount();
 	PortableServer::POA_var poa = _default_POA();
 	PortableServer::ObjectId_var oid = poa->servant_to_id(this);
 	poa->deactivate_object(oid);
 	oid._retn();
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
 IStmt_impl::exec (const char * szCmd)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("exec");
-	printf ("CORBA-Call: %s\n", szCmd);
+	TRY("exec");
+//	printf ("CORBA-Call: %s\n", szCmd);
 	if (strcmp (szCmd, "test") == 0)
 	{
 		CDatabase * pDB = CDatabase::Instance();
@@ -212,13 +247,14 @@ throw(::CORBA::SystemException)
 		return;
 	}
 	puts("exec <cmd> ?!");
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void 
 IStmt_impl::desc (idl::typHeader & crbHeader)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("desc");
+	TRY("desc");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 	{
@@ -234,6 +270,7 @@ throw(::CORBA::SystemException)
 		ASSUME (pDesc);
 		idlcpy (crbHeader[i], *pDesc);
 	}
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 void
@@ -267,13 +304,14 @@ IStmt_impl::SQLTables
 , const char* szType)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLTables");
+	TRY("SQLTables");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = pDatabase->SQLTables (szCatalog, szSchema, szTable, szType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -284,13 +322,14 @@ IStmt_impl::SQLColumns
 , const char* szColumn)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLColumns");
+	TRY("SQLColumns");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = new CSQLColumns(szCatalog, szSchema, szTable, szColumn);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -303,13 +342,14 @@ IStmt_impl::SQLSpecialColumns
 )
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLSpecialColumns");
+	TRY("SQLSpecialColumns");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = new CSQLSpecialColumns(0, szCatalog, szSchema, szTable, nScope, nNullable);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -322,22 +362,21 @@ IStmt_impl::SQLStatistics
 )
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLStatistics");
-	idl::RETN_var vRetn = new idl::RETN;
-	vRetn->nRetn = SQL_INVALID_HANDLE;
+	TRY("SQLStatistics");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
-		return vRetn._retn();
+		return RETN (SQL_INVALID_HANDLE);
 	CTableImpl * pTable = new CSQLStatistics (szCatalog, szSchema, szTable, nUnique, nReserved);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLParams (const idl::typParamset & crbParamset)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLParams");
+	TRY("SQLParams");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -364,111 +403,89 @@ throw(::CORBA::SystemException)
 		pParam->setNull();
 	}
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLPrepare(const char* szSQL)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLPrepare");
+	TRY("SQLPrepare");
 	clear();
-	try
-	{
-		CSQLQuery * pTable = new CSQLQuery(szSQL);
-		ASSUME (pTable);
-		m_aTablePtr = auto_ptr<CTableImpl> (pTable);
-	}
-	catch (const CException & aErr)
-	{
-		return RETN (SQL_ERROR, &aErr);
-	}
-	catch (...)
-	{
-		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
-	}
+	CSQLQuery * pTable = new CSQLQuery(szSQL);
+	ASSUME (pTable);
+	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLExecute ()
-throw(::CORBA::SystemException)
+throw(::CORBA::SystemException, idl::typException)
 {
-	TRACEFN("SQLExecute");
+	TRY("SQLExecute");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
 	pTable->open();
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLNumResultCols (short & rnColumns)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLNumResultCols");
+	TRY("SQLNumResultCols");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
 	rnColumns = pTable->cols();
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLGetTypeInfo (short nDataType)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLGetTypeInfo");
+	TRY("SQLGetTypeInfo");
 	CDatabase * pDatabase = CDatabase::Instance();
 	if (!pDatabase)
 		return RETN (SQL_INVALID_HANDLE);
 	CSQLGetTypeInfo * pTable = pDatabase->SQLGetTypeInfo(nDataType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLFetch (ULONG iRow, ULONG nRow, idl::typRecord_out pRecord)
 throw(::CORBA::SystemException)
 {
-	try
-	{
-		ta = time(0);
-		pRecord = new idl::typRecord;
-		assert (pRecord != 0);
-		CTableImpl * pTable = m_aTablePtr.get();
-		if (!pTable)
-			return RETN (SQL_INVALID_HANDLE);
-		if (nRow == 0)
-			nRow = pTable->rows();
-		if (!pTable->read (iRow, nRow, *pRecord))
-			return RETN (SQL_NO_DATA);
-		time_t te = time(0);
-		time_t td = te - ta;
-	//	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
-	}
-	catch (const CException & aErr)
-	{
-		throw IDL(aErr);
-	}
-	catch (const string & strErr)
-	{
-		throw IDL(EXC("42000", 900, strErr.c_str()));
-//		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
-	}
-	catch (...)
-	{
-		throw IDL(EXC("42000", 900, "Syntax error or access violation"));
-//		return RETN(SQL_ERROR, &EXC("42000", 900, "Syntax error or access violation"));
-	}
+	TRY(0);
+	ta = time(0);
+	pRecord = new idl::typRecord;
+	assert (pRecord != 0);
+	CTableImpl * pTable = m_aTablePtr.get();
+	if (!pTable)
+		return RETN (SQL_INVALID_HANDLE);
+	if (nRow == 0)
+		nRow = pTable->rows();
+	if (!pTable->read (iRow, nRow, *pRecord))
+		return RETN (SQL_NO_DATA);
+	time_t te = time(0);
+	time_t td = te - ta;
+//	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
 	return RETN (SQL_SUCCESS);
-
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLFetchRef (ULONG iRow, ULONG nRow, idl::typRecord & raRecord)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLFetchRef");
+	TRY("SQLFetchRef");
 	ta = time(0);
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
@@ -479,13 +496,14 @@ throw(::CORBA::SystemException)
 	time_t td = te - ta;
 //	trace ("SQLFetchRef [%d] timing: %d s\n", iRow, td);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLDescribeParams (idl::typParamset & raParamset)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLDescribeParams");
+	TRY("SQLDescribeParams");
 	CSQLQuery * pTable = dynamic_cast<CSQLQuery*> (m_aTablePtr.get());
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -511,6 +529,7 @@ throw(::CORBA::SystemException)
 		idlnull (raParam.m_aValue, nType);
 	}
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -520,7 +539,7 @@ IStmt_impl::SQLColAttribute
 , idl::typVariant_out crbValue)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLColAttribute");
+	TRY("SQLColAttribute");
 	crbValue = new idl::typVariant;
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
@@ -528,6 +547,7 @@ throw(::CORBA::SystemException)
 	CValue aValue = pTable->attr (crbAttr);
 	idlcpy (crbValue, aValue);
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -540,7 +560,7 @@ IStmt_impl::SQLDescribeCol
 , CORBA::Short_out crbNullable)
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLDescribeCol");
+	TRY("SQLDescribeCol");
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
@@ -553,6 +573,7 @@ throw(::CORBA::SystemException)
 	crbDecimalDigits = pDesc->digits();
 	crbNullable = pDesc->nullable();
 	return RETN (SQL_SUCCESS);
+	EXCEPTION
 }
 //---------------------------------------------------------------------------
 #if 0
@@ -564,7 +585,7 @@ IStmt_impl::SQLError
 )
 throw(::CORBA::SystemException)
 {
-	TRACEFN("SQLError");
+	TRY("SQLError");
 	const CSQLError::record_t * pRecord = m_aError.fetch();
 	if (pRecord)
 	{
@@ -580,6 +601,7 @@ throw(::CORBA::SystemException)
 	crbErrorCode = 0;
 	crbMessage = CORBA::string_dup ("");
 	return RETN (SQL_NO_DATA);
+	EXCEPTION
 }
 #endif
 //---------------------------------------------------------------------------

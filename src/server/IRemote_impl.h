@@ -149,7 +149,7 @@ public:
 	idl::RETN* SQLPrepare (const char* sql)
 	throw(::CORBA::SystemException);
 	idl::RETN* SQLExecute()
-	throw(::CORBA::SystemException);
+	throw(::CORBA::SystemException, idl::typException);
 	idl::RETN* SQLNumResultCols (short & columns)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------

@@ -2117,7 +2117,6 @@ CStatement::time (double dTime)
 CValue *
 CStatement::time (const char * szValue)
 {
-	static const double dSecPerDay = 3600 * 24;
 	struct tm aTime;
 	memset (&aTime, 0, sizeof(aTime));
 	const int nRead = sscanf (szValue, "%d-%d-%d %d:%d:%d"
@@ -2127,7 +2126,7 @@ CStatement::time (const char * szValue)
 	aTime.tm_year -= 1900;
 	aTime.tm_mon  -= 1;
 	const time_t nTime = mktime (&aTime);
-	return time (nTime / dSecPerDay);
+	return time (SQLTime(nTime));
 }
 //---------------------------------------------------------------------------
 CTerm *

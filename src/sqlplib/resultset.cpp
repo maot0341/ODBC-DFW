@@ -437,9 +437,9 @@ CResultset::add (sqlp::CTerm * pTerm, bool bPrimaryKey)
 	{
 	CASE_SQL_BOOL:
 	CASE_SQL_INTEGER:
-	CASE_SQL_DATETIME:
 		pField = new CInteger;
 		break;
+	CASE_SQL_DATETIME:
 	CASE_SQL_FLOAT:
 		pField = new CDouble();
 		break;
@@ -447,7 +447,7 @@ CResultset::add (sqlp::CTerm * pTerm, bool bPrimaryKey)
 		pField = new CVarchar();
 		break;
 	default:
-		assert (false);
+		throw EXC("xxxxx", 12345, "SQL-Type #%hd ?!", nType);
 	}
 	assert(pField);
 	if (bPrimaryKey)

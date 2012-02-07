@@ -381,7 +381,43 @@ SQLExecDirect (SQLHSTMT hstmt, SQLCHAR *szSQL, SQLINTEGER nLength)
 	if (nResult != SQL_SUCCESS)
 		return nResult;
 	return SQLExecute (hstmt);
+#if 0
 	EXCEPTION (hstmt);
+#else
+	} 
+	catch (const idl::typException & aExc) 
+	{ 
+		CHandle * p = static_cast<CHandle*>(hstmt); 
+		if (p) p->state (aExc.aDiag); 
+	}
+	catch (const idl::typDiagItem & aExc) 
+	{ 
+		CHandle * p = static_cast<CHandle*>(hstmt); 
+		if (p) p->state (aExc); 
+	} 
+	catch (const std::string & strText) 
+	{ 
+		const char * szText = strText.c_str(); 
+		CHandle * p = static_cast<CHandle*>(hstmt); 
+		if (p) p->state (EXC("08S01", 1999, szText)); 
+		TRACELN (szText); 
+	} 
+	catch (const ::CORBA::Exception& aExc) 
+	{ 
+		const char * szText = aExc._to_string(); 
+		CHandle * p = static_cast<CHandle*>(hstmt); 
+		if (p) p->state (EXC("08S01", 1999, szText)); 
+		TRACELN (szText); 
+	} 
+	catch (...) 
+	{ 
+		const char * szText = "unknown exception!"; 
+		CHandle * p = static_cast<CHandle*>(hstmt); 
+		if (p) p->state (EXC("08S01", 1999, szText)); 
+		TRACELN (szText); 
+	} 
+
+#endif
 	return SQL_ERROR;
 }
 //---------------------------------------------------------------------------

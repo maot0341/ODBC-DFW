@@ -456,13 +456,6 @@ void idlcpy (idl::typDesc & raDst, const CDesc & raSrc)
 	raDst.digits = raSrc.digits();
 }
 //---------------------------------------------------------------------------
-#if 0
-idl::typTerm IDL (sqlp::term_t eTerm)
-{
-	return (idl::typTerm) eTerm;
-}
-#endif
-//---------------------------------------------------------------------------
 idl::typException  IDL(const CException & aExc)
 {
 	idl::typException crbExc;
@@ -474,6 +467,5 @@ idl::typException  IDL(const CException & aExc)
 	raDiag.strFile = (const char*)aExc.szFile;
 	raDiag.nLine = aExc.nLine;
 	return crbExc;
-
 }
 //---------------------------------------------------------------------------
