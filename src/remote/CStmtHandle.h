@@ -79,6 +79,13 @@ public:
 	, SQLINTEGER *pfDesc
 	);
 
+	SQLRETURN SQLDescribeParam 
+	( SQLUSMALLINT    nParameter
+	, SQLSMALLINT *   pDataTypePtr
+	, SQLUINTEGER *   pParameterSizePtr
+	, SQLSMALLINT *   pDecimalDigitsPtr
+	, SQLSMALLINT *   pNullablePtr);
+
 	SQLRETURN SQLBindParameter
 	( SQLUSMALLINT nParam
 	, SQLSMALLINT nInputOutputType

@@ -509,8 +509,8 @@ throw(::CORBA::SystemException)
 		return RETN (SQL_INVALID_HANDLE);
 	const vector<CParam*> & aParamset =  pTable->m_aStmt.m_aParam;
 	const short nParam = aParamset.size();
-	if (raParamset.length() < nParam)
-		raParamset.length (nParam);
+//	if (raParamset.length() < nParam)
+	raParamset.length (nParam);
 	short i;
 	for (i=0; i<nParam; i++)
 	{
@@ -521,8 +521,9 @@ throw(::CORBA::SystemException)
 		//raParam.m_nParam;
 		//raParam.m_nInputOutputType;
 		short  nType = pParam->type();
-		raParam.m_nValueType = nType;
-		raParam.m_nParameterType = pParam->IOType();
+		raParam.m_nParam = i+1;
+		raParam.m_nIOType = pParam->IOType();
+		raParam.m_nType = nType;
 		raParam.m_nColumnSize = pParam->ColumnSize();
 		raParam.m_nDecimalDigits = pParam->DecimalDigits();;
 		raParam.m_nNullable = pParam->Nullable();

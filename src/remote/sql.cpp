@@ -114,7 +114,29 @@ SQLBindCol (SQLHSTMT hstmt
 	return pStmt->SQLBindCol (nCol, nTargetTyp, pTargetVal, nTargetLen, pnTargetInd);
 }
 //---------------------------------------------------------------------------
-SQLRETURN  SQL_API 
+SQLRETURN SQL_API 
+SQLDescribeParam (SQLHSTMT hstmt
+, SQLUSMALLINT    nParameter
+, SQLSMALLINT *   pDataTypePtr
+, SQLUINTEGER *   pParameterSizePtr
+, SQLSMALLINT *   pDecimalDigitsPtr
+, SQLSMALLINT *   pNullablePtr)
+{
+	TRY ("SQLDescribeParam");
+	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
+	if (!pStmt)
+		return SQL_INVALID_HANDLE;
+	return pStmt->SQLDescribeParam (nParameter
+	, pDataTypePtr
+	, pParameterSizePtr
+	, pDecimalDigitsPtr
+	, pNullablePtr
+	);
+	EXCEPTION(hstmt);
+	return SQL_ERROR;
+}
+//---------------------------------------------------------------------------
+SQLRETURN SQL_API 
 SQLBindParameter (SQLHSTMT hstmt
 , SQLUSMALLINT nParameter
 , SQLSMALLINT nInputOutputType

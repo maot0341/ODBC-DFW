@@ -387,7 +387,7 @@ void idlcpy (CValue & raValue, const idl::typValue & crbValue)
 //---------------------------------------------------------------------------
 void idlcpy (CParam & raParam, const idl::typParam & crbParam)
 {
-	short nType = crbParam.m_nParameterType;
+	short nType = crbParam.m_nType;
 	const idl::typVariant & crbVariant = crbParam.m_aValue;
 	const idl::typValue & crbValue = crbVariant.aValue;
 	const idl::typTerm crbType = crbValue._d();

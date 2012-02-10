@@ -104,7 +104,7 @@ CSQLTables::CSQLTables
 		if (aExprSchema.match (aRecord.schema))
 		if (aExprTable.match (aRecord.tablename))
 //		if (!STRLEN(szType) || stristr (szType, aRecord.tabletype.c_str()))
-		if (aType.empty() || CONTAINS (aType, aRecord.tabletype.c_str()))
+		if (aType.empty() || CONTAINS (aType, aRecord.tabletype))
 			idx::append (m_aFilter, i);
 	}
 //	m_pIter = new idx::iterator (m_aFilter);

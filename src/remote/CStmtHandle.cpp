@@ -115,6 +115,20 @@ CStmtHandle::cols()
 SQLRETURN
 CStmtHandle::SQLFreeStmt (SQLUSMALLINT nOption)
 {
+	switch (nOption)
+	{
+	case SQL_CLOSE:
+		m_iRecord = 0;
+		break;
+	case SQL_RESET_PARAMS:
+		m_aAPD.clear();
+		break;
+	case SQL_UNBIND:
+		m_aTarget.clear();
+		break;
+	}
+	return SQL_SUCCESS;
+
 	if (nOption == SQL_CLOSE)
 		m_iRecord = 0;
 	if (nOption == SQL_UNBIND)
@@ -295,6 +309,31 @@ CStmtHandle::SQLColAttribute
 }
 //---------------------------------------------------------------------------
 SQLRETURN 
+CStmtHandle::SQLDescribeParam 
+( SQLUSMALLINT    nParam
+, SQLSMALLINT *   pDataTypePtr
+, SQLUINTEGER *   pParameterSizePtr
+, SQLSMALLINT *   pDecimalDigitsPtr
+, SQLSMALLINT *   pNullablePtr)
+{
+	short n = m_aIPD.length();
+	short i = nParam - 1;
+	assert (nParam > 0);
+	if (i >= n)
+		return SQL_ERROR;
+	const idl::typParam & aParam = m_aIPD[i];
+	if (pDataTypePtr)
+		*pDataTypePtr = aParam.m_nType;
+	if (pParameterSizePtr)
+		*pParameterSizePtr = aParam.m_nColumnSize;
+	if (pDecimalDigitsPtr)
+		*pDecimalDigitsPtr = aParam.m_nDecimalDigits;
+	if (pNullablePtr)
+		*pNullablePtr = aParam.m_nNullable;
+	return SQL_SUCCESS;
+}
+//---------------------------------------------------------------------------
+SQLRETURN 
 CStmtHandle::SQLBindParameter
 ( SQLUSMALLINT nParam
 , SQLSMALLINT nInputOutputType
@@ -328,12 +367,12 @@ SQLRETURN
 CStmtHandle::SQLExecute()
 {
 	short i,nParam = m_aAPD.size();
-	RETN (m_aIStub->SQLDescribeParams (m_aIPD));
+//	RETN (m_aIStub->SQLDescribeParams (m_aIPD));
 	idl::typParamset aAPD (m_aIPD);
 	for (i=0; i<nParam; i++)
 	{
 		if (m_aAPD[i].m_nValueType == SQL_C_DEFAULT)
-			m_aAPD[i].m_nValueType = m_aIPD[i].m_nValueType;
+			m_aAPD[i].m_nValueType = m_aIPD[i].m_nType;
 		idlcpy (aAPD[i], m_aAPD[i]);
 	}
 	RETN (m_aIStub->SQLParams (aAPD));
@@ -366,6 +405,7 @@ SQLRETURN CStmtHandle::SQLPrepare (const char * szSQL)
 	if (m_aIStub->_non_existent())
 		connect();
 	RETN (m_aIStub->SQLPrepare (szSQL));
+	idl::RETN_var vRetn = m_aIStub->SQLDescribeParams (m_aIPD);
 	return RETN();
 }
 //---------------------------------------------------------------------------

@@ -58,50 +58,35 @@ using namespace std;
 using namespace stdx;
 namespace sqlp {
 
+static const double gs_dSecPerDay = 3600*24;
 //---------------------------------------------------------------------------
 double SQLTime (time_t nTime)
 {
-	static const double dSecPerDay = 3600*24;
-	return ((double)nTime) / dSecPerDay;
+	return ((double)nTime) / gs_dSecPerDay;
+}
+//---------------------------------------------------------------------------
+double SQLTime (const char * szTime)
+{
+	struct tm aTime;
+	memset (&aTime, 0, sizeof(aTime));
+	const int nRead = sscanf (szTime, "%d-%d-%d %d:%d:%d"
+	, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
+	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+	ASSUME (nRead >= 3);
+	aTime.tm_year -= 1900;
+	aTime.tm_mon  -= 1;
+	const time_t nTime = mktime (&aTime);
+	return SQLTime(nTime);
+}
+//---------------------------------------------------------------------------
+time_t UTCTime (double dTime)
+{
+	return dTime * gs_dSecPerDay;
 }
 //---------------------------------------------------------------------------
 vector<string> SQLNameList (const char * szList)
 {
-	vector<string> aList;
-	if (!STRLEN(szList))
-		return aList;
-	string strName;
-	const char * a = szList;
-	const char * k;
-	const char * e;
-	while (true)
-	{
-		while (*a && isspace(*a))
-			a++;
-		if (*a == 0)
-			break;
-		k = strchr (a, ',');
-		if (*a == '\'')
-		{
-			a++;
-			e = strchr (a, '\'');
-			assert (e);
-			assert (k == 0 || e < k);
-			strName.assign (a, e-a);
-		}
-		else
-		{
-			e = (k == 0) ? a + strlen(a) : k;
-			while (--e >= a && isspace(*e));
-			strName.assign (a, e-a+1);
-		}
-		if (!strName.empty())
-			aList.push_back (strName);
-		if (k == 0)
-			break;
-		a = k + 1;
-	}
-	return aList;
+	return stdx::split (szList, ',', '\'', false);
 }
 //---------------------------------------------------------------------------
 short SQLTypeOrder (short nType)
@@ -360,7 +345,26 @@ string id(const CObject* pObject)
 	const CParam * pParam = dynamic_cast<const CParam*>(pObject);
 	if (pParam)
 	{
-		return "?";
+		const short nType = pParam->type();
+		const char * szId;
+		switch (nType)
+		{
+		CASE_SQL_STRING:
+			szId = "?string";
+			break;
+		CASE_SQL_INTEGER:
+			szId = "?integer";
+			break;
+		CASE_SQL_FLOAT:
+			szId = "?double";
+			break;
+		CASE_SQL_DATETIME:
+			szId = "?datetime";
+			break;
+		default:
+			szId = "?<type>";
+		}
+		return szId;
 	}
 	const CValue * pValue = dynamic_cast<const CValue*>(pObject);
 	if (pValue)
@@ -372,7 +376,23 @@ string id(const CObject* pObject)
 		else if (CTerm::isNumber (nType))
 			sprintf (sz, "%lg", pValue->asDouble());
 		else
-			strcpy (sz, "val");
+		switch (nType)
+		{
+		CASE_SQL_STRING:
+			strcpy (sz, "string");
+			break;
+		CASE_SQL_INTEGER:
+			strcpy (sz, "integer");
+			break;
+		CASE_SQL_FLOAT:
+			strcpy (sz, "double");
+			break;
+		CASE_SQL_DATETIME:
+			strcpy (sz, "datetime");
+			break;
+		default:
+			sprintf (sz, "val[%d]", nType);
+		}
 		return string(sz);
 	}
 	const CUnary * pUnary = dynamic_cast<const CUnary*>(pObject);
@@ -630,7 +650,7 @@ int compare (const CTerm & aTerm1, const CTerm & aTerm2)
 	{
 	CASE_SQL_NUMBER:
 		{
-		assert (CTerm::isNumber (aTerm2.type()));
+//		assert (CTerm::isNumber (aTerm2.type()));
 		const double d1 = aTerm1.asDouble();
 		const double d2 = aTerm2.asDouble();
 		if (d1 < d2)
@@ -641,7 +661,7 @@ int compare (const CTerm & aTerm1, const CTerm & aTerm2)
 		}
 	CASE_SQL_STRING:
 		{
-		assert (CTerm::isString(aTerm2.type()));
+//		assert (CTerm::isString(aTerm2.type()));
 		const char * s1 = aTerm1.asString();
 		const char * s2 = aTerm2.asString();
 		return strcmp (s1,s2);
@@ -826,7 +846,7 @@ CValue::CValue (short t)
 	m_dNumber = 0;
 	m_pString = 0;
 	m_nString = 0;
-	m_strDebug = id(this);
+	clear(t);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (short t, double val)
@@ -836,7 +856,7 @@ CValue::CValue (short t, double val)
 	m_dNumber = val;
 	m_pString = 0;
 	m_nString = 0;
-	m_strDebug = id(this);
+	set (t, val);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (const char * val)
@@ -845,7 +865,6 @@ CValue::CValue (const char * val)
 	m_pString = 0;
 	m_nString = 0;
 	set (SQL_CHAR, val);
-	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::CValue (const CTerm & val)
@@ -854,7 +873,6 @@ CValue::CValue (const CTerm & val)
 	m_pString = 0;
 	m_nString = 0;
 	operator= (val);
-	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 CValue::~CValue()
@@ -868,34 +886,7 @@ CValue::clear(short nType)
 {
 	m_bValid = false;
 	m_nType = nType;
-}
-//---------------------------------------------------------------------------
-char*
-CValue::alloc (size_t nSize)
-{
-	nSize++;
-	if (nSize < 10)
-		nSize = 10;
-	if (m_nString >= nSize && m_pString)
-		return m_pString;
-	free (m_pString);
-	m_pString = (char*) malloc (nSize);
-	m_nString = nSize;
-	return m_pString;
-}
-//---------------------------------------------------------------------------
-const char*
-CValue::set (const char * szValue)
-{
-	if (m_pString)
-		*m_pString = 0;
-	if (!szValue)
-		return m_pString;
-	alloc (strlen(szValue));
-	strcpy (m_pString, szValue);
-//	CStringpool & aMist = gs_aStringpool;
-//	m_szString = gs_aStringpool[szValue];
-	return m_pString;
+	m_strDebug = id(this);
 }
 //---------------------------------------------------------------------------
 const CValue &
@@ -957,45 +948,122 @@ CValue::operator= (const CTerm & aTerm)
 	return *this;
 }
 //---------------------------------------------------------------------------
+char*
+CValue::alloc (size_t nSize)
+{
+	nSize++;
+	if (nSize < 10)
+		nSize = 10;
+	if (m_nString >= nSize && m_pString)
+		return m_pString;
+	free (m_pString);
+	m_pString = (char*) malloc (nSize);
+	m_nString = nSize;
+	return m_pString;
+}
+//---------------------------------------------------------------------------
+CValue &
+CValue::set (const char * szValue)
+{
+	if (m_pString)
+		*m_pString = 0;
+	switch (m_nType)
+	{
+	CASE_SQL_STRING:
+		if (!szValue)
+			return *this;
+		alloc (strlen(szValue));
+		strcpy (m_pString, szValue);
+		break;
+	CASE_SQL_INTEGER:
+		m_dNumber = (long) (atof (szValue) + 0.5);
+		break;
+	CASE_SQL_FLOAT:
+		m_dNumber = atof (szValue);
+		break;
+	CASE_SQL_DATETIME:
+		m_dNumber = SQLTime (szValue);
+		break;
+	default:
+		ASSUME (false);
+	}
+	return *this;
+}
+//---------------------------------------------------------------------------
+CValue &
+CValue::set (double dValue)
+{
+	if (m_pString)
+		*m_pString = 0;
+	switch (m_nType)
+	{
+	CASE_SQL_STRING:
+		alloc(256);
+		wsprintf (m_pString, "%g", dValue);
+		break;
+	CASE_SQL_INTEGER:
+		m_dNumber = (long) (dValue + 0.5);
+		break;
+	CASE_SQL_FLOAT:
+	CASE_SQL_DATETIME:
+		m_dNumber = dValue;
+		break;
+	default:
+		ASSUME (false);
+	}
+	return *this;
+}
+//---------------------------------------------------------------------------
 CValue &
 CValue::set (short nType, double dValue)
 {
-//	assert (isNumber(eType));
 	m_bValid = true;
 	m_nType = nType;
-	m_dNumber = dValue;
-	return *this;
+	m_strDebug = id(this);
+	return set (dValue);
 }
 //---------------------------------------------------------------------------
 CValue &
 CValue::set (short nType, const char * szValue)
 {
-//	assert (isString(eType));
 	m_bValid = true;
 	m_nType = nType;
-//	m_aString = STRNVL(szValue);
-	set (szValue);
-	return *this;
+	m_strDebug = id(this);
+	return set (szValue);
 }
 //---------------------------------------------------------------------------
 double
 CValue::asDouble() const
 {
-//	ASSUME (m_eType == TermNUMBER);
+	switch (m_nType)
+	{
+	CASE_SQL_STRING:
+		return m_pString ? atof(m_pString) : 0.0;
+	}
 	return m_dNumber;
 }
 //---------------------------------------------------------------------------
 time_t
 CValue::asTime() const
 {
-//	ASSUME (m_eType == TermNUMBER);
+	switch (m_nType)
+	{
+	CASE_SQL_STRING:
+		return SQLTime (m_pString);
+	}
 	return m_dNumber;
 }
 //---------------------------------------------------------------------------
 long
 CValue::asInteger() const
 {
-//	ASSUME (m_eType == TermNUMBER);
+	switch (m_nType)
+	{
+	CASE_SQL_STRING:
+		if (!m_pString)
+			return 0.0;
+		return atof(m_pString) + 0.5;
+	}
 	return m_dNumber;
 }
 //---------------------------------------------------------------------------
@@ -1004,40 +1072,47 @@ CValue::asString() const
 {
 	if (isNull())
 		return "";
-	if(isString(m_nType))
-		return m_pString;
-	CValue * pThis = const_cast<CValue*>(this);
-//	if (false)
-	if (isBool(m_nType))
+	const size_t nSize = 256;
+	CValue* pThis = const_cast<CValue*>(this);
+	switch (m_nType)
 	{
-		const char * szValue = asBool() ? "yes" : "no";
-		return pThis->set (szValue);
-	}
-	if (isDateTime(m_nType))
-	{
+	CASE_SQL_BOOL:
+		return asBool() ? "yes" : "no";
+	CASE_SQL_STRING:
+		break;
+	CASE_SQL_DATETIME:
+		{
+		if (STRLEN(m_pString))
+			return m_pString;
+		assert (pThis);
+		pThis->alloc(nSize);
 		_daylight = 0;
-		time_t nTime = m_dNumber;
+		time_t nTime = UTCTime (m_dNumber);
 		struct tm * pTime = localtime(&nTime);
 		if (!pTime)
 			return 0;
-		char szTime[256];
 		//strftime (szTime, sizeof(szTime), "%d.%m.%Y %H:%M:%S", pTime);
-		strftime (szTime, sizeof(szTime), "%Y-%m-%d %H:%M:%S", pTime);
-		return pThis->set (szTime);
+		strftime (m_pString, nSize, "%Y-%m-%d %H:%M:%S", pTime);
+		}
+		break;
+	CASE_SQL_INTEGER:
+		if (STRLEN(m_pString))
+			return m_pString;
+		assert (pThis);
+		pThis->alloc(nSize);
+		wsprintf (m_pString, "%ld", (long)m_dNumber);
+		break;
+	CASE_SQL_FLOAT:
+		if (STRLEN(m_pString))
+			return m_pString;
+		assert (pThis);
+		pThis->alloc(nSize);
+		wsprintf (m_pString, "%g", m_dNumber);
+		break;
+	default:
+		return "<unknown>";
 	}
-	if (isInteger(m_nType))
-	{
-		char  szValue[256];
-		sprintf (szValue, "%ld", (long)m_dNumber);
-		return pThis->set (szValue);
-	}
-	if (isFloat(m_nType))
-	{
-		char  szValue[256];
-		sprintf (szValue, "%g", m_dNumber);
-		return pThis->set (szValue);
-	}
-	return "<unknown>";
+	return m_pString;
 }
 //---------------------------------------------------------------------------
 short
@@ -2523,7 +2598,7 @@ CStatement::prepare (CFunction & aFunc)
 	const ULONG nArgs = aArgs.size();
 	const CDesc * pDesc = 0;
 	CValue aValue;
-	short  nTyp = SQL_UNKNOWN_TYPE;
+	short  nType = SQL_UNKNOWN_TYPE;
 	ULONG i;
 	for (i=0; i<nArgs; i++)
 	{
@@ -2538,11 +2613,11 @@ CStatement::prepare (CFunction & aFunc)
 			pDesc = pColumn->desc();
 
 		short nTerm = pTerm->type();
-		if (nTyp != SQL_UNKNOWN_TYPE)
-		if (SQLTypeOrder (nTerm) <= SQLTypeOrder(nTyp))
+		if (nType != SQL_UNKNOWN_TYPE)
+		if (SQLTypeOrder (nTerm) <= SQLTypeOrder(nType))
 			continue;
 		if (nTerm != SQL_UNKNOWN_TYPE)
-			nTyp = nTerm;
+			nType = nTerm;
 	}
 
 	if (pDesc)
@@ -2553,7 +2628,7 @@ CStatement::prepare (CFunction & aFunc)
 			if (!pParam)
 				continue;
 			pParam->m_IOType         = SQL_PARAM_INPUT;
-			pParam->m_nType       = pDesc->type();
+			pParam->m_nType		     = pDesc->type();
 			pParam->m_nNullable      = pDesc->aSQL_DESC_NULLABLE();
 			pParam->m_nDecimalDigits = pDesc->digits();
 			pParam->m_nColumnSize    = pDesc->size();

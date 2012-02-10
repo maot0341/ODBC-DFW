@@ -109,6 +109,7 @@ class CTableSet;
 short SQLTypeOrder (short nType);
 vector<string> SQLNameList (const char * szList);
 double SQLTime (time_t t);
+double SQLTime (const char *);
 
 string id(const CObject*);
 string stringf (const char * szFormat, ...);
@@ -219,12 +220,14 @@ public:
 	time_t        asTime() const;
 
 	char*         alloc (size_t);
-	const char *  set (const char * val);
 	void          valid (bool b) {m_bValid = b; }
 
+	CValue & set (const char * val);
+	CValue & set (double val);
+
 	void fetch (const CTerm*);
-	CValue & set (short, double val);
-	CValue & set (short, const char * val);
+	CValue & set (short type, double val);
+	CValue & set (short type, const char * val);
 	static bool isTrue (const CTerm *t) { return t==0 || t->asBool(); }
 	
 	bool   m_bValid;

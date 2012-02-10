@@ -204,10 +204,21 @@ void idltime (double dTime, short nType, void* pValue, long nLen, long * pInd)
 		const time_t nTime = SQL2UTC(dTime);
 		struct tm * pTime = localtime (&nTime);
 		char * szValue = (char*) pValue;
-		size_t n = strftime (szValue, nLen, "%Y-%m-%d %H:%M:%S", pTime);
-		szValue[nLen-1] = 0;
-		if (pInd)
-			*pInd = strlen(szValue);
+		size_t n;
+		if (pTime)
+		{
+			n = strftime (szValue, nLen, "%Y-%m-%d %H:%M:%S", pTime);
+			szValue[nLen-1] = 0;
+			if (pInd)
+				*pInd = strlen(szValue);
+		}
+		else
+		{
+			if (pValue && nLen > 0)
+				*(char*) pValue = 0;
+			if (pInd)
+				*pInd = SQL_NULL_DATA;
+		}
 		return;
 	}
 //	assert (false);
@@ -263,17 +274,17 @@ IDLString (void * pValue, long* pInd)
 //---------------------------------------------------------------------------
 void idlcpy (idl::typParam & crbParam, const CParam & aParam)
 {
-	crbParam.m_nParam = aParam.m_nParam;
-	crbParam.m_nInputOutputType = aParam.m_nInputOutputType;
-	crbParam.m_nParameterType = aParam.m_nParameterType;
-	crbParam.m_nColumnSize = aParam.m_nColumnSize;
-	crbParam.m_nDecimalDigits = aParam.m_nDecimalDigits;
+//	crbParam.m_nParam = aParam.m_nParam;
+//	crbParam.m_nIOType = aParam.m_nInputOutputType;
+//	crbParam.m_nType = aParam.m_nParameterType;
+//	crbParam.m_nColumnSize = aParam.m_nColumnSize;
+//	crbParam.m_nDecimalDigits = aParam.m_nDecimalDigits;
 
-	if (aParam.m_nValueType != SQL_C_DEFAULT)
-		crbParam.m_nValueType = aParam.m_nValueType;
+//	if (aParam.m_nValueType != SQL_C_DEFAULT)
+//		crbParam.m_nType = aParam.m_nValueType;
 
 	idl::typValue & raValue = crbParam.m_aValue.aValue;
-	short nType = crbParam.m_nValueType;
+	short nType = aParam.m_nValueType;
 	void* pValue = aParam.m_pParameterValuePtr;
 	long* pInd = aParam.m_pStrLen_or_IndPtr;
 	crbParam.m_aValue.isNull = false;

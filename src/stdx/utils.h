@@ -21,6 +21,7 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <assert.h>
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -104,6 +105,46 @@ STRNVL (const char * s)
 	if (s)
 		return std::string(s);
 	return string();
+}
+//---------------------------------------------------------------------------
+inline
+vector<string> split (const char * szText, char cDel, char cStr=0, bool bAllowEmpty=true)
+{
+	vector<string> aList;
+	if (STRNUL(szText))
+		return aList;
+	string strName;
+	const char * a = szText;
+	const char * k;
+	const char * e;
+	while (true)
+	{
+		while (*a && isspace(*a))
+			a++;
+		if (*a == 0)
+			break;
+		k = strchr (a, cDel);
+		if (cStr && *a == cStr)
+		{
+			a++;
+			e = strchr (a, cStr);
+			assert (e);
+			assert (k == 0 || e < k);
+			strName.assign (a, e-a);
+		}
+		else
+		{
+			e = (k == 0) ? a + strlen(a) : k;
+			while (--e >= a && isspace(*e));
+			strName.assign (a, e-a+1);
+		}
+		if (!strName.empty() || bAllowEmpty)
+			aList.push_back (strName);
+		if (k == 0)
+			break;
+		a = k + 1;
+	}
+	return aList;
 }
 //---------------------------------------------------------------------------
 inline

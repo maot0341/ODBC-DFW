@@ -87,6 +87,14 @@ SOURCE=.\btree.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\CString.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\CString.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\debug.cpp
 # End Source File
 # Begin Source File
@@ -104,10 +112,6 @@ SOURCE=.\regexpr.h
 # Begin Source File
 
 SOURCE=.\stdxlib.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\string.cpp
 # End Source File
 # Begin Source File
 

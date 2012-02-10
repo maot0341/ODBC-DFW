@@ -22,8 +22,8 @@
     08.08.01  hks    Aktualisierungsinterface ausgelagert 
 *****************************************************************************/
 
-#ifndef TP_IDL_IREMOTE_IDL
-#define TP_IDL_IREMOTE_IDL
+#ifndef IREMOTE_IDL
+#define IREMOTE_IDL
 
 #pragma prefix "go.psi.de"
 
@@ -40,7 +40,6 @@ module idl
 	////-----------------------------------------
 	//// Value-Types
 	////-----------------------------------------
-	//enum typValue { ValueSTRING, ValueNUMBER, ValueTIME, ValueBINARY, ValueTYP };
 	enum typTerm {TermBOOLEAN, TermINTEGER, TermNUMBER, TermTIME, TermSTRING, TermTYP };
 	typedef sequence<octet> typBinary;
 	////-----------------------------------------
@@ -78,9 +77,8 @@ module idl
 	struct typParam
 	{
 		short m_nParam;
-		short m_nInputOutputType;
-		short m_nValueType;
-		short m_nParameterType;
+		short m_nIOType;
+		short m_nType;
 		long  m_nColumnSize;
 		short m_nDecimalDigits;
 		short m_nNullable;
@@ -277,4 +275,4 @@ module idl
 	};
 };
 //---------------------------------------------------------------------------
-#endif // TP_IDL_IREMOTE_IDL
+#endif // IREMOTE_IDL

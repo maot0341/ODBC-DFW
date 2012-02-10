@@ -143,7 +143,7 @@ CTableERG::read (ULONG iRec, CRecord & raRecord) const
 			continue;
 		if (dValue <= 0)
 			continue;
-		raRecord[4] = nTime;
+		raRecord[4] = SQLTime(nTime);
 		raRecord[5+i] = dValue;
 	}
 	return true;
