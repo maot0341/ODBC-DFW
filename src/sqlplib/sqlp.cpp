@@ -695,6 +695,20 @@ void format (vector<CValue> & aRecord, const vector<CTerm*> & aTerms)
 	}
 }
 //---------------------------------------------------------------------------
+// CObject
+//---------------------------------------------------------------------------
+CObject::CObject()
+{
+	m_pStmt = 0;
+}
+//---------------------------------------------------------------------------
+void
+CObject::diag (const CDiagItem & aInfo)
+{
+	assert (m_pStmt);
+	m_pStmt->diag (aInfo);
+}
+//---------------------------------------------------------------------------
 // CTerm
 //---------------------------------------------------------------------------
 CTerm::CTerm()
@@ -967,6 +981,7 @@ CValue::set (const char * szValue)
 {
 	if (m_pString)
 		*m_pString = 0;
+	char * p = "";
 	switch (m_nType)
 	{
 	CASE_SQL_STRING:
@@ -976,10 +991,16 @@ CValue::set (const char * szValue)
 		strcpy (m_pString, szValue);
 		break;
 	CASE_SQL_INTEGER:
-		m_dNumber = (long) (atof (szValue) + 0.5);
+//		m_dNumber = (long) (atof (szValue) + 0.5);
+		m_dNumber = (long) (strtod (szValue, &p) + 0.5);
+		if (p == szValue)
+			throw EXC("sdasd", 12345, "Number?!:  [%s]", szValue);
+		if (*p)
+			diag (EXC("sdasd", 12345, "Number?!:  [%s]", szValue));
 		break;
 	CASE_SQL_FLOAT:
-		m_dNumber = atof (szValue);
+//		m_dNumber = atof (szValue);
+		m_dNumber = strtod (szValue, &p);
 		break;
 	CASE_SQL_DATETIME:
 		m_dNumber = SQLTime (szValue);
@@ -2056,6 +2077,25 @@ CStatement::atom (const char * szValue)
 	return szAtom;
 }
 //---------------------------------------------------------------------------
+void
+CStatement::assign (CObject * pObject)
+{
+	assert (pObject);
+	pObject->m_pStmt = this;
+	m_aMemory.push_back (pObject);
+}
+//---------------------------------------------------------------------------
+void
+CStatement::diag (const CDiagItem * pInfo)
+{
+	if (!m_pDiag)
+		return;
+	if (pInfo)
+		m_pDiag->push_back (*pInfo);
+	else
+		m_pDiag->clear();
+}
+//---------------------------------------------------------------------------
 const char *
 CStatement::sql (int nLength, bool bQuoted)
 {
@@ -2088,7 +2128,7 @@ CStatement::value (short nType, double dValue)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue (nType, dValue);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 //---------------------------------------------------------------------------
@@ -2107,7 +2147,7 @@ CStatement::value (const char * szValue)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue (szValue);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 //---------------------------------------------------------------------------
@@ -2127,7 +2167,7 @@ CStatement::value (long int nValue)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue(SQL_INTEGER, nValue);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 //---------------------------------------------------------------------------
@@ -2146,7 +2186,7 @@ CStatement::value (double dValue)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue (SQL_DOUBLE, dValue);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 //---------------------------------------------------------------------------
@@ -2165,7 +2205,7 @@ CStatement::value (const char * szValue)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue (szValue);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 #endif
@@ -2185,7 +2225,7 @@ CStatement::time (double dTime)
 			return pTerm;
 	}
 	CValue * pTerm = new CValue (SQL_DATETIME, dTime);
-	m_aMemory.push_back (pTerm);
+	assign (pTerm);
 	return pTerm;
 }
 //---------------------------------------------------------------------------
@@ -2237,8 +2277,7 @@ CStatement::column (const char * szSchema, const char * szTable, const char * sz
 			return pColumn;
 	}
 	CColumn * pColumn = new CColumn (szTable, szColumn);
-	ASSUME (pColumn);
-	m_aMemory.push_back (pColumn);
+	assign (pColumn);
 	return pColumn;
 }
 //---------------------------------------------------------------------------
@@ -2290,9 +2329,7 @@ CStatement::unary (int nHead, CTerm * pTerm)
 	default:
 		pUnary = new CUnary (nHead, pTerm);
 	}
-	
-	ASSUME (pUnary);
-	m_aMemory.push_back (pUnary);
+	assign (pUnary);
 	return pUnary;
 }
 //---------------------------------------------------------------------------
@@ -2414,8 +2451,7 @@ CStatement::func (int nHead, va_list args)
 	default:
 		pFunc = new CFunction (nHead, aArgs);
 	}
-	ASSUME (pFunc);
-	m_aMemory.push_back (pFunc);
+	assign (pFunc);
 	return pFunc;
 }
 //---------------------------------------------------------------------------
@@ -2423,8 +2459,7 @@ CParam *
 CStatement::param()
 {
 	CParam * pParam = new CParam;
-	ASSUME (pParam);
-	m_aMemory.push_back (pParam);
+	assign (pParam);
 	m_aParam.push_back (pParam);
 	return pParam;
 }
@@ -2441,8 +2476,7 @@ CStatement::table (const char * szCatatlog, const char * szSchema, const char * 
 	if (iTable != m_aTables.end())
 		return iTable->first;
 	CTable * pTable =  m_pDatabase->table (szCatatlog, szSchema, szName);
-	ASSUME (pTable);
-	m_aMemory.push_back (pTable);
+	assign (pTable);
 	m_aTables[szAlias] = pTable;
 	return szAlias;
 }
@@ -2451,7 +2485,7 @@ const char *
 CStatement::join (int nHead, const char * pLeft, const char * pRight, CTerm * pCondition)
 {
 	CJoin * pJoin = new CJoin (nHead, pLeft, pRight, pCondition);
-	m_aMemory.push_back (pJoin);
+	assign (pJoin);
 	m_aJoins.push_back (pJoin);
 //	join_t aJoin = { nHead, pLeft, pRight, pCondition};
 	return pLeft;

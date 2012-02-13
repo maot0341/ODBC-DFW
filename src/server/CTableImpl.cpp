@@ -34,6 +34,15 @@ CTableImpl::CTableImpl(const char * szName)
 		m_strName = szName;
 }
 //---------------------------------------------------------------------------
+void
+CTableImpl::diag (const CDiagItem * pInfo)
+{
+	if (pInfo)
+		m_aDiag.push_back (*pInfo);
+	else
+		m_aDiag.clear();
+}
+//---------------------------------------------------------------------------
 // TableImpl -- Neue Spalte hinzufuegen
 //---------------------------------------------------------------------------
 void CTableImpl::column (short nType

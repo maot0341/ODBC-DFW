@@ -47,7 +47,8 @@ void idlcpy (CValue &, const idl::typVariant &);
 void idlcpy (CValue &, const idl::typValue &);
 
 void idlcpy (CParam &, const idl::typParam &);
-//idl::typTerm IDL (sqlp::term_t);
+
+void idlcpy (idl::typDiagSeq &, const CDiagInfo &);
 
 idl::typException IDL (const CException &);
 //---------------------------------------------------------------------------

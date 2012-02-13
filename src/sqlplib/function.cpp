@@ -38,7 +38,8 @@ CFuncLIKE::CFuncLIKE (int nHead, const vector<CTerm*> & aArgs)
 	ASSUME (pTerm2);
 	const char * s1 = pTerm1->asString();
 	const char * s2 = pTerm2->asString();
-	m_aToken = match (s2, "%");
+	m_aRegExp.init (s2, "%", "?", false);
+//	m_aToken = match (s2, "%");
 }
 //---------------------------------------------------------------------------
 CFuncLIKE::CFuncLIKE (int head, va_list & args)

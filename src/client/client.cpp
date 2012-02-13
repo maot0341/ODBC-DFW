@@ -28,9 +28,9 @@ static const char* id_tp_pro_tprodump_cpp = "@(#) $Header: /gow/hasy/cvs/src/tp/
 #include <iostream>
 
 #include <OB/CORBA.h>
-#include "../sqlplib/sqlp.h"
-#include "../sqlplib/yac.h"
-#include "IRemote_idl.h"
+#include <sqlplib/sqlp.h>
+#include <sqlplib/yac.h>
+#include <IRemote_idl.h>
 
 using namespace std;
 using namespace sqlp;

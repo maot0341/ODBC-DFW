@@ -43,7 +43,7 @@ class CLink;
 //---------------------------------------------------------------------------
 // exception handling
 //---------------------------------------------------------------------------
-#define TRY(s) try { if (s) TRACELN(s)
+#define TRY(s) try { TRACELN(s)
 //#define TRY(s) try {
 #define EXCEPTION(h) \
 	} \

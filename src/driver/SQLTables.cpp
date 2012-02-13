@@ -65,7 +65,7 @@ bool match (const string & s1, const char * szExpr)
 {
 	if (!szExpr || *szExpr == 0)
 		return true;
-	CRegExpr aExpr(szExpr);
+	CRegExp aExpr(szExpr);
 	return aExpr.match (s1.c_str());
 	return true;
 }
@@ -89,10 +89,10 @@ CSQLTables::CSQLTables
 	m_pData = pData;
 	ASSUME (m_pData);
 
-	CRegExpr aExprCatalog (szCatalog, "%", "_");
-	CRegExpr aExprSchema (szSchema, "%", "_");
-	CRegExpr aExprTable (szTable, "%", "_");
-	CRegExpr aExprType (szType, "%", "_");
+	CRegExp aExprCatalog (szCatalog, "%", "_");
+	CRegExp aExprSchema (szSchema, "%", "_");
+	CRegExp aExprTable (szTable, "%", "_");
+	CRegExp aExprType (szType, "%", "_");
 
 	const ULONG nRows = m_pData->rows();
 	ULONG i;

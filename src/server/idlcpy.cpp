@@ -456,6 +456,23 @@ void idlcpy (idl::typDesc & raDst, const CDesc & raSrc)
 	raDst.digits = raSrc.digits();
 }
 //---------------------------------------------------------------------------
+void idlcpy (idl::typDiagSeq & raDiag, const CDiagInfo & aInfo)
+{
+	const size_t nInfo = aInfo.size();
+	raDiag.length(nInfo);
+	size_t i;
+	for (i=0; i<nInfo; i++)
+	{
+		idl::typDiagItem & raDst = raDiag[i];
+		const CDiagItem & aSrc = aInfo[i];
+		raDst.nCode = aSrc.nId;
+		strncpy (raDst.szState, aSrc.szState , 6);
+		raDst.strText = (const char*)aSrc.strText.c_str();
+		raDst.strFile = (const char*)aSrc.szFile;
+		raDst.nLine = aSrc.nLine;
+	}
+}
+//---------------------------------------------------------------------------
 idl::typException  IDL(const CException & aExc)
 {
 	idl::typException crbExc;

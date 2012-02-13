@@ -48,10 +48,15 @@ public:
 	CValue attr (int attr) const;
 	const CDesc * desc (ULONG col) const;
 
+	const CDiagInfo & diag() const                              { return m_aDiag; }
+	void diag (const CDiagItem & aInfo)                         { m_aDiag.push_back (aInfo); }
+	void diag (const CDiagItem *);
+
 	void clear (CRecord &) const;
 	virtual bool read (ULONG i, ULONG n, idl::typRecord &) const = 0;
 
 protected:
+	CDiagInfo m_aDiag;
 	vector<CDesc> m_aDesc;
 	string m_strName;
 	string m_strSchema;

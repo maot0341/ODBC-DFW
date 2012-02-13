@@ -35,9 +35,11 @@ extern int yydebug;
 CSQLQuery::CSQLQuery (const char * szSQL)
 : m_aStmt (CDatabase::Instance())
 {
+
 	CStatement * pStmt = &m_aStmt;
 	if (szSQL)
 		pStmt->setSQL (szSQL);
+	pStmt->init (&m_aDiag);
 	yyinit (pStmt,0);
 //	yydebug = 1;
 	int n = yyparse();

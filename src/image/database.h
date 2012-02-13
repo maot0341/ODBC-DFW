@@ -34,14 +34,6 @@
 using namespace std;
 using namespace sqlp;
 //---------------------------------------------------------------------------
-// column descriptor
-//---------------------------------------------------------------------------
-struct  column_t
-{
-	const char * name;
-	term_t type;
-};
-//---------------------------------------------------------------------------
 class CTableBase : public CTable
 {
 public:

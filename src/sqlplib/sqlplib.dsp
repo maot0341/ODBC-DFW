@@ -138,10 +138,6 @@ InputPath=.\lex.l
 # End Source File
 # Begin Source File
 
-SOURCE=.\match.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\resultset.cpp
 # End Source File
 # Begin Source File

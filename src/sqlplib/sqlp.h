@@ -100,8 +100,9 @@ class CTable;
 class CValue;
 class CRsQuery;
 class CStatement;
-class CException;
+class CDebugInfo;
 class CTableSet;
+class CStatement;
 
 //---------------------------------------------------------------------------
 //enum term_t { TermBOOL, TermINT, TermFLOAT, TermTIME, TermVCHAR, TermTYP};
@@ -115,12 +116,6 @@ string id(const CObject*);
 string stringf (const char * szFormat, ...);
 void format (vector<CValue> & record, const vector<CTerm*> & terms);
 //---------------------------------------------------------------------------
-bool match (const char * str, const char * pat, const char * esc);
-bool match (const char * str, const char * pat, char del, char esc);
-bool match (const char * str, const vector<string> aToken);
-vector<string> match (const char * pat, const char * esc);
-vector<string> match (const char * pat, char del, char esc);
-//---------------------------------------------------------------------------
 
 //// table name or null-ptr (if more then one tables involed)
 CTerm* filter (CStatement & stmt, CTerm* pTerm, const char * szTable);
@@ -131,12 +126,72 @@ typedef std::auto_ptr<CObject> CVariant;
 //---------------------------------------------------------------------------
 int compare (const CTerm& ,const CTerm&);
 //---------------------------------------------------------------------------
+// Exception
+//---------------------------------------------------------------------------
+#define EXC CDebugInfo(__FILE__,__LINE__).set
+#define DBG CDebugInfo(__FILE__,__LINE__).set
+//#define ERR(h,s,id,t) (h).push(s,id,t,__FILE__,__LINE__)
+class CDebugInfo
+{
+public:
+	typedef vector<CDebugInfo*> CMsgList;
+
+	CDebugInfo (const CDebugInfo & src) { (*this) = src; }
+	CDebugInfo (const char * file, ULONG line): szFile(file), nLine(line) {}
+
+	CDebugInfo (const char * state, ULONG id, const char * text, const char * file, ULONG line)
+	: nId(id), strText(text), szFile(file), nLine(line)
+	{
+		memcpy (szState, state, 5);
+	}
+
+	CDebugInfo & operator=(const CDebugInfo & src)
+	{
+		if (&src == this)
+			return *this;
+		nId = src.nId;
+		memcpy (szState, src.szState, sizeof(szState));
+		strText = src.strText;
+		szFile = src.szFile;
+		nLine = src.nLine;
+		return *this;
+	}
+
+	const CDebugInfo& set (const char * state, ULONG id, const char * text, ...)
+	{
+		nId = id;
+		strncpy (szState, state, sizeof(szState));
+		char szBuff[8000];
+		va_list aArgs;
+		va_start (aArgs, text);
+		vsprintf (szBuff, text, aArgs);
+		va_end(aArgs);
+		strText = szBuff;
+		return *this;
+	}
+
+	ULONG nId;
+	char szState[6];
+	std::string strText;
+	const char * szFile;
+	ULONG  nLine;
+};
+typedef CDebugInfo CDiagItem;
+typedef CDiagItem CException;
+typedef vector<CDiagItem> CDiagInfo;
+//---------------------------------------------------------------------------
 // Parser-Objekte
 //---------------------------------------------------------------------------
 class CObject
 {
 public:
+	friend class CStatement;
+	CObject();
 	virtual ~CObject() {}
+	void diag (const CDiagItem &);
+
+protected:
+	CStatement* m_pStmt;
 };
 //---------------------------------------------------------------------------
 class CTerm : public CObject
@@ -393,56 +448,6 @@ protected:
 //---------------------------------------------------------------------------
 typedef auto_ptr<CRecordset> CResult;
 //---------------------------------------------------------------------------
-// Exception
-//---------------------------------------------------------------------------
-#define EXC CException(__FILE__,__LINE__).set
-//#define ERR(h,s,id,t) (h).push(s,id,t,__FILE__,__LINE__)
-class CException
-{
-public:
-	typedef vector<CException*> CMsgList;
-
-	CException (const CException & src) { (*this) = src; }
-	CException (const char * file, ULONG line): szFile(file), nLine(line) {}
-
-	CException (const char * state, ULONG id, const char * text, const char * file, ULONG line)
-	: nId(id), strText(text), szFile(file), nLine(line)
-	{
-		memcpy (szState, state, 5);
-	}
-
-	CException & operator=(const CException & src)
-	{
-		if (&src == this)
-			return *this;
-		nId = src.nId;
-		memcpy (szState, src.szState, sizeof(szState));
-		strText = src.strText;
-		szFile = src.szFile;
-		nLine = src.nLine;
-		return *this;
-	}
-
-	const CException& set (const char * state, ULONG id, const char * text, ...)
-	{
-		nId = id;
-		strncpy (szState, state, sizeof(szState));
-		char szBuff[8000];
-		va_list aArgs;
-		va_start (aArgs, text);
-		vsprintf (szBuff, text, aArgs);
-		va_end(aArgs);
-		strText = szBuff;
-		return *this;
-	}
-
-	ULONG nId;
-	char szState[6];
-	std::string strText;
-	const char * szFile;
-	ULONG  nLine;
-};
-//---------------------------------------------------------------------------
 // DATABASE
 //---------------------------------------------------------------------------
 class IDatabase
@@ -477,6 +482,11 @@ public:
 	CFunction * func (int head, va_list args);
 	CParam * param();
 	const char * join (int head, const char * left, const char * right, CTerm * cond);
+
+	void assign (CObject *);
+	void diag (const CDiagItem & aInfo)                        { if (m_pDiag) m_pDiag->push_back (aInfo); }
+	void diag (const CDiagItem *);
+	void init (CDiagInfo * pDiag)                              { m_pDiag = pDiag; }
 
 	void prepare (CFunction &);
 	void prepare();
@@ -522,6 +532,7 @@ public:
 	vector<ULONG> m_aIndex;
 	vector<CParam*> m_aParam;
 //	vector<CParam*> m_aBind;
+	CDiagInfo* m_pDiag;
 };
 //---------------------------------------------------------------------------
 } // namespace

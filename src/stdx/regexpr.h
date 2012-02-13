@@ -32,7 +32,7 @@ namespace stdx
 class CRegExp
 {
 public:
-	CRegExp (const char * expr, const char * any="*", const char * one="?", bool cs=true);
+	CRegExp (const char * expr=0, const char * any="*", const char * one="?", bool cs=true);
 	CRegExp (const CRegExp&);
 
 	virtual ~CRegExp();

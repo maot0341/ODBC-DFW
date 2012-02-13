@@ -24,6 +24,7 @@
 #include "sqlp.h"
 #include "yac.h"
 #include <stdx/debug.h>
+#include <stdx/regexpr.h>
 #include <math.h>
 #include <assert.h>
 #include <vector>
@@ -38,7 +39,8 @@ public:
 	CFuncLIKE (int head, va_list &);
 
 protected:
-	vector<string> m_aToken;
+	stdx::CRegExp m_aRegExp;
+//	vector<string> m_aToken;
 };
 //---------------------------------------------------------------------------
 template <short T>

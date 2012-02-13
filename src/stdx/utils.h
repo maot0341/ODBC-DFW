@@ -21,6 +21,7 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <stdarg.h>
 #include <assert.h>
 #include <algorithm>
 #include <vector>
@@ -31,7 +32,8 @@ using namespace std;
 
 #define BIT(i) (1 << (i))
 #define DIM(arr) (sizeof(arr) / sizeof(arr[0]))
-#define STRLEN(s) (s && *s)
+#define STRLEN(s) ((s) && *(s))
+#define STRNUL(s) (!(s) || (*(s)) == 0)
 #define NVL(v,n) (((v)==0) ? (n) : (v))
 #define LIMIT(v,g1,g2)  (((v) < (g1)) ? (g1) : ((v) > (g2)) ? g2 : (v))
 #define FIND(v,x) std::find ((v).begin(), (v).end(), x)
@@ -81,22 +83,16 @@ void split (const std::map<K,T> & aMap, vector<K> * pKeys, vector<T> * pData)
 			pData->push_back ((*i).second);
 	}
 }
-//---------------------------------------------------------------------------
-template<class T>
-T format (const char * szFormat, ...)
+//-----------------------------------------------------------------------------
+inline
+std::string strprintf (const char * szFormat, ...)
 {
 	char szBuff[8000];
 	va_list aArgs;
 	va_start (aArgs, szFormat);
 	vsprintf (szBuff, szFormat, aArgs);
 	va_end(aArgs);
-	return T(szBuff);
-}
-//---------------------------------------------------------------------------
-inline bool
-STRNUL (const char * s)
-{
-	return s == 0 || *s == 0;
+	return std::string(szBuff);
 }
 //---------------------------------------------------------------------------
 inline std::string

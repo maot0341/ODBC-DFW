@@ -30,7 +30,12 @@
 #ifndef TRACE
 #	define TRACE OutputDebugString
 #endif
-#define TRACELN(m) stdx::trace ("%s %s:%d\n", (const char *)(m), __FILE__, __LINE__)
+//-----------------------------------------------------------------------------
+#ifdef  NDEBUG
+#	define TRACELN(m) ((void)0)
+#else
+#	define TRACELN(m) if (m) stdx::trace ("%-30s %s:%d\n", (const char *)(m), __FILE__, __LINE__)
+#endif
 //-----------------------------------------------------------------------------
 #define ASSUME(expr) \
 	if (!(expr)) \

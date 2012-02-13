@@ -104,7 +104,8 @@ public:
 
 	void clear();
 
-	idl::RETN* RETN(short n, const CException* exc=0);
+//	idl::RETN* RETN(short n, const CException* exc=0);
+	idl::RETN* RETN(short n, const CDiagInfo* info=0);
 	////-----------------------------------------
 	idl::RETN*
 	SQLTables
