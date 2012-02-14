@@ -24,7 +24,7 @@
 #include "idlcpy.h"
 
 //---------------------------------------------------------------------------
-void idlnull (idl::typVariant & crbValue, short nType)
+void idlnull (idl::typValue & crbValue, short nType)
 {
 	crbValue.isNull = true;
 	const char * szNull = "";
@@ -72,47 +72,47 @@ void idlnull (idl::typVariant & crbValue, short nType)
 //	crbValue.aValue.aString (CORBA::string_dup (""));
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, bool bValue)
+void idlcpy (idl::typValue & crbValue, bool bValue)
 {
 	crbValue.isNull = false;
 	crbValue.aValue.bBoolean (bValue);
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, long nValue)
+void idlcpy (idl::typValue & crbValue, long nValue)
 {
 	crbValue.isNull = false;
 	crbValue.aValue.nInteger (nValue);
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, short nValue)
+void idlcpy (idl::typValue & crbValue, short nValue)
 {
 	crbValue.isNull = false;
 	crbValue.aValue.nInteger (nValue);
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, double dValue)
+void idlcpy (idl::typValue & crbValue, double dValue)
 {
 	crbValue.isNull = false;
 	crbValue.aValue.dNumber (dValue);
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, const string & strValue)
+void idlcpy (idl::typValue & crbValue, const string & strValue)
 {
 	idlcpy (crbValue, strValue.c_str());
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, const char * szValue)
+void idlcpy (idl::typValue & crbValue, const char * szValue)
 {
 	crbValue.isNull = false;
 	crbValue.aValue.aString (CORBA::string_dup (szValue));
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, const CTerm & aValue)
+void idlcpy (idl::typValue & crbValue, const CTerm & aValue)
 {
 	idlcpy (crbValue, &aValue);
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant & crbValue, const CTerm * pValue)
+void idlcpy (idl::typValue & crbValue, const CTerm * pValue)
 {
 	assert (pValue);
 	const short nType = pValue->type();
@@ -330,12 +330,12 @@ void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd)
 }
 #endif
 //---------------------------------------------------------------------------
-void idlcpy (CValue & raValue, const idl::typVariant & crbVariant)
+void idlcpy (CValue & raValue, const idl::typValue & crbValue)
 {
-	const idl::typValue & crbValue = crbVariant.aValue;
-	const idl::typTerm crbType = crbValue._d();
-	if (!crbVariant.isNull)
-		idlcpy (raValue, crbValue);
+	const idl::typVariant & crbVariant = crbValue.aValue;
+	const idl::typTerm crbType = crbVariant._d();
+	if (!crbValue.isNull)
+		idlcpy (raValue, crbVariant);
 	else
 	switch (crbType)
 	{
@@ -359,7 +359,7 @@ void idlcpy (CValue & raValue, const idl::typVariant & crbVariant)
 	}
 }
 //---------------------------------------------------------------------------
-void idlcpy (CValue & raValue, const idl::typValue & crbValue)
+void idlcpy (CValue & raValue, const idl::typVariant & crbValue)
 {
 	const idl::typTerm crbType = crbValue._d();
 	switch (crbType)
@@ -388,28 +388,28 @@ void idlcpy (CValue & raValue, const idl::typValue & crbValue)
 void idlcpy (CParam & raParam, const idl::typParam & crbParam)
 {
 	short nType = crbParam.m_nType;
-	const idl::typVariant & crbVariant = crbParam.m_aValue;
-	const idl::typValue & crbValue = crbVariant.aValue;
-	const idl::typTerm crbType = crbValue._d();
-	if (crbVariant.isNull)
+	const idl::typValue & crbValue = crbParam.m_aValue;
+	const idl::typVariant & crbVariant = crbValue.aValue;
+	const idl::typTerm crbType = crbVariant._d();
+	if (crbValue.isNull)
 		raParam.clear (nType);
 	else
 	switch (crbType)
 	{
 	case idl::TermSTRING:
-		raParam.set (nType, crbValue.aString());
+		raParam.set (nType, crbVariant.aString());
 		break;
 	case idl::TermBOOLEAN:
-		raParam.set (nType, crbValue.bBoolean());
+		raParam.set (nType, crbVariant.bBoolean());
 		break;
 	case idl::TermINTEGER:
-		raParam.set (nType, crbValue.nInteger());
+		raParam.set (nType, crbVariant.nInteger());
 		break;
 	case idl::TermNUMBER:
-		raParam.set (nType, crbValue.dNumber());
+		raParam.set (nType, crbVariant.dNumber());
 		break;
 	case idl::TermTIME:
-		raParam.set (nType, crbValue.dTime());
+		raParam.set (nType, crbVariant.dTime());
 		break;
 	default:
 		assert (false);
@@ -456,7 +456,7 @@ void idlcpy (idl::typDesc & raDst, const CDesc & raSrc)
 	raDst.digits = raSrc.digits();
 }
 //---------------------------------------------------------------------------
-void idlcpy (idl::typDiagSeq & raDiag, const CDiagInfo & aInfo)
+size_t idlcpy (idl::typDiagSeq & raDiag, const CDiagInfo & aInfo)
 {
 	const size_t nInfo = aInfo.size();
 	raDiag.length(nInfo);
@@ -471,9 +471,36 @@ void idlcpy (idl::typDiagSeq & raDiag, const CDiagInfo & aInfo)
 		raDst.strFile = (const char*)aSrc.szFile;
 		raDst.nLine = aSrc.nLine;
 	}
+	return nInfo;
 }
 //---------------------------------------------------------------------------
-idl::typException  IDL(const CException & aExc)
+idl::RETN * IDL (short nRetn, const CDiagInfo * pInfo)
+{
+	idl::RETN_var vRetn = new idl::RETN;
+	vRetn->nRetn = nRetn;
+	if (!pInfo)
+		return vRetn._retn();
+	const CDiagInfo & aInfo = *pInfo;
+	const size_t nInfo = aInfo.size();
+	idl::typDiagSeq & raDiag = vRetn->aDiag;
+	raDiag.length(nInfo);
+	size_t i;
+	for (i=0; i<nInfo; i++)
+	{
+		idl::typDiagItem & raDst = raDiag[i];
+		const CDiagItem & aSrc = aInfo[i];
+		raDst.nCode = aSrc.nId;
+		strncpy (raDst.szState, aSrc.szState , 6);
+		raDst.strText = (const char*)aSrc.strText.c_str();
+		raDst.strFile = (const char*)aSrc.szFile;
+		raDst.nLine = aSrc.nLine;
+	}
+	if (nRetn == SQL_SUCCESS && nInfo > 0)
+		vRetn->nRetn = SQL_SUCCESS_WITH_INFO;
+	return vRetn._retn();
+}
+//---------------------------------------------------------------------------
+idl::typException  IDL (const CException & aExc)
 {
 	idl::typException crbExc;
 	crbExc.aDiag.length(1);

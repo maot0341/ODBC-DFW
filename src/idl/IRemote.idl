@@ -43,9 +43,9 @@ module idl
 	enum typTerm {TermBOOLEAN, TermINTEGER, TermNUMBER, TermTIME, TermSTRING, TermTYP };
 	typedef sequence<octet> typBinary;
 	////-----------------------------------------
-	//// Value
+	//// Variant
 	////-----------------------------------------
-	union typValue switch (typTerm)
+	union typVariant switch (typTerm)
 	{
 	case TermSTRING:
 		string aString;
@@ -59,17 +59,17 @@ module idl
 		double dTime;
 	};
 	////-----------------------------------------
-	//// Variant
+	//// Value
 	////-----------------------------------------
-	struct typVariant
+	struct typValue
 	{
 		boolean isNull;
-		typValue aValue;
+		typVariant aValue;
 	};
 	////-----------------------------------------
 	//// RECORD(SET)
 	////-----------------------------------------
-	typedef sequence<typVariant> typRecord;
+	typedef sequence<typValue> typRecord;
 	typedef sequence<typRecord>  typRecordset;
 	////-----------------------------------------
 	//// Param
@@ -82,7 +82,7 @@ module idl
 		long  m_nColumnSize;
 		short m_nDecimalDigits;
 		short m_nNullable;
-		typVariant m_aValue;
+		typValue m_aValue;
 	};
 	typedef sequence<typParam>  typParamset;
 	////-----------------------------------------
@@ -258,7 +258,7 @@ module idl
 		RETN SQLColAttribute
 		( in unsigned short col
 		, in unsigned short attr
-		, out typVariant value
+		, out typValue value
 		)
 		raises (typException);
 

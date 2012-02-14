@@ -49,7 +49,7 @@ static time_t ta;
 #	define TRY(s) try { TRACELN(s)
 #endif
 //---------------------------------------------------------------------------
-#	define EXCEPTION } \
+#	define EXCEPTIONS } \
  	catch (const CException & aExc)	\
 	{ \
 		throw IDL(aExc); \
@@ -64,6 +64,7 @@ static time_t ta;
 	} \
 
 #define DIAG(p) ((p) ? &(p)->diag() : (CDiagInfo*)0)
+//#define DIAG(s,t) IDL (s, (t) ? &(t)->diag() : (CDiagInfo*)0) 
 //---------------------------------------------------------------------------
 // Host
 //---------------------------------------------------------------------------
@@ -82,7 +83,7 @@ throw(::CORBA::SystemException)
 	TRY("shutdown");
 	printf ("CORBA-Call: shutdown\n");
 	orb->shutdown (wait_for_completion);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -91,7 +92,7 @@ throw(::CORBA::SystemException)
 {
 	TRY("IHost::ping");
 //	printf ("CORBA-Call (IHost 0x%x): ping\n", this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -112,7 +113,7 @@ throw(::CORBA::SystemException)
 		return;
 	}
 	puts("exec <cmd> ?!");
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::IConnection_ptr
@@ -125,7 +126,7 @@ throw(::CORBA::SystemException)
 	PortableServer::ServantBase_var vImpl = pConnection;
 	idl::IConnection_var vConnection = pConnection->_this();
 	return vConnection._retn();
-	EXCEPTION
+	EXCEPTIONS
 }
 
 //---------------------------------------------------------------------------
@@ -135,7 +136,7 @@ IConnection_impl::IConnection_impl()
 {
 	TRY("IConnection_impl");
 //	printf ("0x%x  IConnection_impl\n", this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 IConnection_impl::~IConnection_impl()
@@ -151,7 +152,7 @@ IConnection_impl::~IConnection_impl()
 		pStmt->m_pDBC = 0;
 		pStmt->destroy();
 	}
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -165,7 +166,7 @@ throw(::CORBA::SystemException)
 	PortableServer::ObjectId_var oid = poa->servant_to_id(this);
 	poa->deactivate_object(oid);
 	oid._retn();
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -174,7 +175,7 @@ throw(::CORBA::SystemException)
 {
 	TRY("ping");
 //	printf ("0x%x  IConnection: ping\n", this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::IStmt_ptr
@@ -187,7 +188,7 @@ throw(::CORBA::SystemException)
 	PortableServer::ServantBase_var vImpl = pStmt;
 	idl::IStmt_var vStmt = pStmt->_this();
 	return vStmt._retn();
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 // Stmt -- Interface
@@ -199,7 +200,7 @@ IStmt_impl::IStmt_impl(IConnection_impl *pDBC)
 	m_pDBC = pDBC;
 	if (m_pDBC)
 		m_pDBC->m_aStmtList.push_back(this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 IStmt_impl::~IStmt_impl()
@@ -208,7 +209,7 @@ IStmt_impl::~IStmt_impl()
 //	printf ("0x%x  ~IStmt_impl\n", this);
 	if (m_pDBC)
 		m_pDBC->m_aStmtList.remove (this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -217,7 +218,7 @@ throw(::CORBA::SystemException)
 {
 	TRY("ping");
 //	printf ("0x%x  IStmt: ping\n", this);
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -232,7 +233,7 @@ throw(::CORBA::SystemException)
 	PortableServer::ObjectId_var oid = poa->servant_to_id(this);
 	poa->deactivate_object(oid);
 	oid._retn();
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -248,7 +249,7 @@ throw(::CORBA::SystemException)
 		return;
 	}
 	puts("exec <cmd> ?!");
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void 
@@ -271,7 +272,7 @@ throw(::CORBA::SystemException)
 		ASSUME (pDesc);
 		idlcpy (crbHeader[i], *pDesc);
 	}
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 void
@@ -280,36 +281,10 @@ IStmt_impl::clear()
 	m_aTablePtr = auto_ptr<CTableImpl> (0);
 }
 //---------------------------------------------------------------------------
-#if 0
-idl::RETN*
-IStmt_impl::RETN (short nRetn, const CException * pExc)
-{
-	idl::RETN* pRetn = new idl::RETN;
-	pRetn->nRetn = nRetn;
-	if (pExc == 0)
-		return pRetn;
-	pRetn->aDiag.length(1);
-	idl::typDiagItem & raDiag = pRetn->aDiag[0];
-	raDiag.nCode = pExc->nId;
-	strncpy (raDiag.szState, pExc->szState , 6);
-	raDiag.strText = (const char*)pExc->strText.c_str();
-	raDiag.strFile = (const char*)pExc->szFile;
-	raDiag.nLine = pExc->nLine;
-	return pRetn;
-}
-#endif
-//---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::RETN (short nRetn, const CDiagInfo * pInfo)
 {
-	idl::RETN* pRetn = new idl::RETN;
-	pRetn->nRetn = nRetn;
-	if (!pInfo)
-		return pRetn;
-	idlcpy (pRetn->aDiag, *pInfo);
-	if (nRetn == SQL_SUCCESS)
-		pRetn->nRetn = SQL_SUCCESS_WITH_INFO;
-	return pRetn;
+	return IDL (nRetn, pInfo);
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -327,7 +302,7 @@ throw(::CORBA::SystemException)
 	CTableImpl * pTable = pDatabase->SQLTables (szCatalog, szSchema, szTable, szType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -345,7 +320,7 @@ throw(::CORBA::SystemException)
 	CTableImpl * pTable = new CSQLColumns(szCatalog, szSchema, szTable, szColumn);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -365,7 +340,7 @@ throw(::CORBA::SystemException)
 	CTableImpl * pTable = new CSQLSpecialColumns(0, szCatalog, szSchema, szTable, nScope, nNullable);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -385,7 +360,7 @@ throw(::CORBA::SystemException)
 	CTableImpl * pTable = new CSQLStatistics (szCatalog, szSchema, szTable, nUnique, nReserved);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -402,7 +377,7 @@ throw(::CORBA::SystemException)
 	for (i=0; i<nParam; i++)
 	{
 		const idl::typParam & crbParam = crbParamset[i];
-		const idl::typVariant & crbValue = crbParam.m_aValue;
+		const idl::typValue & crbValue = crbParam.m_aValue;
 		sqlp::CParam * pParam = raParamset[i];
 		idlcpy (*pParam, crbParam);
 	}
@@ -412,7 +387,7 @@ throw(::CORBA::SystemException)
 		pParam->setNull();
 	}
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -425,7 +400,7 @@ throw(::CORBA::SystemException)
 	ASSUME (pTable);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -438,7 +413,7 @@ throw(::CORBA::SystemException, idl::typException)
 		return RETN (SQL_INVALID_HANDLE);
 	pTable->open();
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -452,7 +427,7 @@ throw(::CORBA::SystemException)
 	pTable->diag(0);
 	rnColumns = pTable->cols();
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -466,7 +441,7 @@ throw(::CORBA::SystemException)
 	CSQLGetTypeInfo * pTable = pDatabase->SQLGetTypeInfo(nDataType);
 	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -488,7 +463,7 @@ throw(::CORBA::SystemException)
 	time_t td = te - ta;
 //	trace ("SQLFetch [%d] timing: %d s\n", iRow, td);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -506,7 +481,7 @@ throw(::CORBA::SystemException)
 	time_t td = te - ta;
 //	trace ("SQLFetchRef [%d] timing: %d s\n", iRow, td);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -540,25 +515,25 @@ throw(::CORBA::SystemException)
 		idlnull (raParam.m_aValue, nType);
 	}
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
 IStmt_impl::SQLColAttribute
 ( CORBA::UShort crbColumn
 , CORBA::UShort crbAttr
-, idl::typVariant_out crbValue)
+, idl::typValue_out crbValue)
 throw(::CORBA::SystemException)
 {
 	TRY("SQLColAttribute");
-	crbValue = new idl::typVariant;
+	crbValue = new idl::typValue;
 	CTableImpl * pTable = m_aTablePtr.get();
 	if (!pTable)
 		return RETN (SQL_INVALID_HANDLE);
 	CValue aValue = pTable->attr (crbAttr);
 	idlcpy (crbValue, aValue);
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 idl::RETN*
@@ -584,7 +559,7 @@ throw(::CORBA::SystemException)
 	crbDecimalDigits = pDesc->digits();
 	crbNullable = pDesc->nullable();
 	return RETN (SQL_SUCCESS, DIAG(pTable));
-	EXCEPTION
+	EXCEPTIONS
 }
 //---------------------------------------------------------------------------
 

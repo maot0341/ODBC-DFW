@@ -59,20 +59,67 @@ using namespace stdx;
 namespace sqlp {
 
 static const double gs_dSecPerDay = 3600*24;
+#define TIMENULL -1
 //---------------------------------------------------------------------------
 double SQLTime (time_t nTime)
 {
+	if (nTime == TIMENULL)
+		return TIMENULL;
 	return ((double)nTime) / gs_dSecPerDay;
 }
 //---------------------------------------------------------------------------
-double SQLTime (const char * szTime)
+double SQLTime (const char * szText)
 {
 	struct tm aTime;
 	memset (&aTime, 0, sizeof(aTime));
-	const int nRead = sscanf (szTime, "%d-%d-%d %d:%d:%d"
-	, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
-	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-	ASSUME (nRead >= 3);
+	int nRead;
+	int i;
+	const char * p = szText;
+	const char * aEsc[] = { "{ts ", "{t ", "{d "};
+	const int nEsc = DIM(aEsc);
+	for (i=0; i<nEsc; i++)
+	{
+		const char * szEsc = aEsc[i];
+		const size_t nEsc = strlen(szEsc);
+		if (!strnicmp (szText, szEsc, nEsc))
+			break;
+	}
+	if (i < nEsc)
+	{
+		const char * szEsc = aEsc[i];
+		const size_t nEsc = strlen(szEsc);
+		p = szText + nEsc;
+	}
+	SKIPSPC(p);
+	const int nFmt = i;
+	switch (nFmt)
+	{
+	case 0:
+		nRead = sscanf (p, "'%d-%d-%d %d:%d:%d'"
+		, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
+		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+		break;
+	case 1:
+		nRead = sscanf (p, "'%d-%d-%d'"
+		, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday);
+		break;
+	case 2:
+		nRead = sscanf (p, "'%d:%d:%d'"
+		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+		break;
+	default:
+		nRead = sscanf (p, "#%d-%d-%d %d:%d:%d#"
+		, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
+		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+		if (!nRead)
+		nRead = sscanf (p, "%d-%d-%d %d:%d:%d"
+		, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
+		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
+	}
+	if (nRead < 3)
+		return TIMENULL;
+	if (nRead == 4)
+		return TIMENULL;
 	aTime.tm_year -= 1900;
 	aTime.tm_mon  -= 1;
 	const time_t nTime = mktime (&aTime);
@@ -979,6 +1026,7 @@ CValue::alloc (size_t nSize)
 CValue &
 CValue::set (const char * szValue)
 {
+	const char * szName = name();
 	if (m_pString)
 		*m_pString = 0;
 	char * p = "";
@@ -993,17 +1041,19 @@ CValue::set (const char * szValue)
 	CASE_SQL_INTEGER:
 //		m_dNumber = (long) (atof (szValue) + 0.5);
 		m_dNumber = (long) (strtod (szValue, &p) + 0.5);
-		if (p == szValue)
-			throw EXC("sdasd", 12345, "Number?!:  [%s]", szValue);
-		if (*p)
-			diag (EXC("sdasd", 12345, "Number?!:  [%s]", szValue));
+		if (p == szValue || *p != 0)
+			throw EXC("07006", 12345, "Error in %s: [%s] Integer?!", szName, szValue);
 		break;
 	CASE_SQL_FLOAT:
 //		m_dNumber = atof (szValue);
+		if (p == szValue || *p != 0)
+			throw EXC("07006", 12345, "Error in %s: [%s] Number?!", szName, szValue);
 		m_dNumber = strtod (szValue, &p);
 		break;
 	CASE_SQL_DATETIME:
 		m_dNumber = SQLTime (szValue);
+		if (m_dNumber == TIMENULL)
+			throw EXC("07006", 12345, "Error in %s: [%s] Time?!", szName, szValue);
 		break;
 	default:
 		ASSUME (false);
@@ -1134,6 +1184,13 @@ CValue::asString() const
 		return "<unknown>";
 	}
 	return m_pString;
+}
+//---------------------------------------------------------------------------
+CParam::CParam (short id)
+{
+	sprintf (m_szName,  "Parameter %d", id+1);
+	m_nParam = id;
+	m_nType = SQL_UNKNOWN_TYPE;
 }
 //---------------------------------------------------------------------------
 short
@@ -1792,149 +1849,6 @@ CColumn::asString() const
 	return "";
 }
 //---------------------------------------------------------------------------
-CParam::CParam()
-{
-	m_nType = SQL_UNKNOWN_TYPE;
-}
-//---------------------------------------------------------------------------
-#if 0
-time_t
-CParam::getTime (const char * szParam)
-{
-	struct tm aTime;
-	double dParam = 0;
-	int nScan = 0;
-
-	memset (&aTime, 0, sizeof(aTime));
-	if (nScan < 3)
-	nScan = sscanf (szParam, "%d-%d-%d %d:%d:%d"
-	, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
-	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-	if (nScan < 3)
-	nScan = sscanf (szParam, "%d.%d.%d %d:%d:%d"
-	, &aTime.tm_mday, &aTime.tm_mon, &aTime.tm_year
-	, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-	if (nScan < 3)
-	if (sscanf (szParam, "%lf", &dParam))
-	{
-		dParam -= 25569;
-		dParam *= 24 * 3600;
-		dParam -= 3600;
-		dParam = floor(dParam + 0.5);
-		return dParam;
-	}
-	aTime.tm_year -= 1900;
-	aTime.tm_mon -= 1;
-	if (nScan < 3)
-		return 0;
-	dParam = mktime (&aTime);
-	return dParam;
-}
-//---------------------------------------------------------------------------
-double
-CParam::getReal (const char * szParam)
-{
-	double dParam = 0;
-	if (szParam)
-	sscanf (szParam, "%lf", &dParam);
-	return dParam;
-}
-#endif
-//---------------------------------------------------------------------------
-#if 0
-void
-CParam::setTyp (short nTyp)
-{
-	m_nType = nTyp;
-	if (m_nTargetTyp == SQL_C_CHAR)
-	if (isDateTime(m_nType))
-	{
-		char szParam[256];
-		memset (szParam, 0, sizeof(szParam));
-		if (m_pTargetInd && *m_pTargetInd != SQL_NTS)
-			memcpy (szParam, m_pTargetVal, *m_pTargetInd);
-		else
-			strncpy (szParam, (char*)m_pTargetVal, sizeof(szParam));
-		char * pc;
-		for (pc=szParam; *pc; pc++)
-		if (*pc == ',')
-			*pc='.';
-
-		struct tm aTime;
-		double dTime;
-		memset (&aTime, 0, sizeof(aTime));
-		int nScan = 0;
-		if (nScan < 3)
-		nScan = sscanf (szParam, "%d-%d-%d %d:%d:%d"
-		, &aTime.tm_year, &aTime.tm_mon, &aTime.tm_mday
-		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-		if (nScan < 3)
-		nScan = sscanf (szParam, "%d.%d.%d %d:%d:%d"
-		, &aTime.tm_mday, &aTime.tm_mon, &aTime.tm_year
-		, &aTime.tm_hour, &aTime.tm_min, &aTime.tm_sec);
-		aTime.tm_year -= 1900;
-		aTime.tm_mon -= 1;
-		if (sscanf (szParam, "%lf", &dTime))
-		{
-			dTime -= 25569;
-			dTime *= 24 * 3600;
-			dTime -= 3600;
-			m_dNumber = floor (dTime + 0.5);
-			return;
-		}
-		if (nScan < 3)
-			m_bValid = false;
-		else
-			m_dNumber = mktime (&aTime);
-		return;
-	}
-	if (m_nTargetTyp == SQL_C_CHAR)
-	if (isFloat(m_nType))
-	{
-		const char * szParam = (const char *) m_pTargetVal;
-		if (!szParam)
-			return;
-		if (!sscanf (szParam, "%lf", &m_dNumber))
-			m_bValid = false;
-		return;
-	}
-	if (m_nTargetTyp == SQL_C_CHAR
-	|| (isString(m_nType) && m_nTargetTyp == SQL_C_DEFAULT))
-	{
-		if (m_pTargetInd && *m_pTargetInd != SQL_NTS)
-			const_cast<string&>(m_aString).assign ((char*)m_pTargetVal, *m_pTargetInd);
-		else
-			const_cast<string&>(m_aString).assign ((char*)m_pTargetVal);
-		return;
-	}
-	if (m_nTargetTyp == SQL_C_TIMESTAMP)
-	{
-		TIMESTAMP_STRUCT & aTarget = *((TIMESTAMP_STRUCT*)m_pTargetVal);
-		struct tm aTime;
-		memset (&aTime, 0, sizeof(aTime));
-		aTime.tm_year = aTarget.year - 1900;
-		aTime.tm_mon = aTarget.month - 1;
-		aTime.tm_mday = aTarget.day;
-		aTime.tm_hour = aTarget.hour;
-		aTime.tm_min = aTarget.minute;
-		aTime.tm_sec = aTarget.second;
-		m_dNumber = mktime (&aTime);
-		return;
-	}
-	char * szEnd = 0;
-	if (m_nTargetTyp == SQL_C_DOUBLE)
-		m_dNumber = *(double*) m_pTargetVal;
-	if (m_nTargetTyp == SQL_C_FLOAT)
-		m_dNumber = *(double*) m_pTargetVal;
-	if (m_nTargetTyp == SQL_C_CHAR)
-		m_dNumber = strtod ((const char*) m_pTargetVal, &szEnd);
-	if (m_nTargetTyp == SQL_C_SLONG)
-		m_dNumber = *(signed long*) m_pTargetVal;
-	if (m_nTargetTyp == SQL_C_ULONG)
-		m_dNumber = *(unsigned long*) m_pTargetVal;
-}
-#endif
-//---------------------------------------------------------------------------
 IDatabase::~IDatabase()
 {
 }
@@ -2458,7 +2372,8 @@ CStatement::func (int nHead, va_list args)
 CParam *
 CStatement::param()
 {
-	CParam * pParam = new CParam;
+	const size_t id = m_aParam.size();
+	CParam * pParam = new CParam (id);
 	assign (pParam);
 	m_aParam.push_back (pParam);
 	return pParam;
@@ -2661,7 +2576,7 @@ CStatement::prepare (CFunction & aFunc)
 			CParam * pParam = dynamic_cast<CParam*>(aArgs[i]);
 			if (!pParam)
 				continue;
-			pParam->m_IOType         = SQL_PARAM_INPUT;
+			pParam->m_nIOType        = SQL_PARAM_INPUT;
 			pParam->m_nType		     = pDesc->type();
 			pParam->m_nNullable      = pDesc->aSQL_DESC_NULLABLE();
 			pParam->m_nDecimalDigits = pDesc->digits();

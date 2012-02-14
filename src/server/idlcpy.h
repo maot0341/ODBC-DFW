@@ -31,15 +31,15 @@
 //using namespace std;
 using namespace sqlp;
 //---------------------------------------------------------------------------
-void idlcpy (idl::typVariant &, bool bValue);
-void idlcpy (idl::typVariant &, const char *);
-void idlcpy (idl::typVariant &, const std::string &);
-void idlcpy (idl::typVariant &, long);
-void idlcpy (idl::typVariant &, short);
-void idlcpy (idl::typVariant &, double);
-void idlcpy (idl::typVariant &, const CTerm *);
-void idlcpy (idl::typVariant &, const CTerm &);
-void idlnull (idl::typVariant &, short type);
+void idlcpy (idl::typValue &, bool bValue);
+void idlcpy (idl::typValue &, const char *);
+void idlcpy (idl::typValue &, const std::string &);
+void idlcpy (idl::typValue &, long);
+void idlcpy (idl::typValue &, short);
+void idlcpy (idl::typValue &, double);
+void idlcpy (idl::typValue &, const CTerm *);
+void idlcpy (idl::typValue &, const CTerm &);
+void idlnull (idl::typValue &, short type);
 
 void idlcpy (idl::typDesc &, const CDesc &);
 
@@ -48,9 +48,10 @@ void idlcpy (CValue &, const idl::typValue &);
 
 void idlcpy (CParam &, const idl::typParam &);
 
-void idlcpy (idl::typDiagSeq &, const CDiagInfo &);
+//void idlcpy (idl::typDiagSeq &, const CDiagInfo &);
 
 idl::typException IDL (const CException &);
+idl::RETN * IDL (short retn, const CDiagInfo *);
 //---------------------------------------------------------------------------
 #if 0
 void idlcpy (const idl::typVariant & vValue, short nType, void* pValue, long nLen, long * pInd);

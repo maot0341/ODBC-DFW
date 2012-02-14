@@ -38,6 +38,7 @@ using namespace std;
 #define LIMIT(v,g1,g2)  (((v) < (g1)) ? (g1) : ((v) > (g2)) ? g2 : (v))
 #define FIND(v,x) std::find ((v).begin(), (v).end(), x)
 #define CONTAINS(v,x) (std::find ((v).begin(), (v).end(), x) != (v).end())
+#define SKIPSPC(p) while(*(p) && isspace(*(p))) (p)++
 //#define STRNVL(s) (s) ? (s) : string()
 
 namespace stdx

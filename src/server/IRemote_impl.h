@@ -169,7 +169,7 @@ public:
 	idl::RETN* SQLColAttribute
 	( CORBA::UShort col
 	, CORBA::UShort attr
-	, idl::typVariant_out value
+	, idl::typValue_out value
 	)
 	throw(::CORBA::SystemException);
 	////-----------------------------------------

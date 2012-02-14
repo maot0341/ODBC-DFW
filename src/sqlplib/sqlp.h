@@ -177,8 +177,29 @@ public:
 	ULONG  nLine;
 };
 typedef CDebugInfo CDiagItem;
-typedef CDiagItem CException;
 typedef vector<CDiagItem> CDiagInfo;
+typedef CDiagItem CException;
+//---------------------------------------------------------------------------
+inline
+CDiagInfo & operator<< (CDiagInfo & raInfo, const CDiagItem & aItem)
+{
+	raInfo.push_back (aItem);
+	return raInfo;
+}
+inline 
+CDiagInfo operator+ (const CDiagItem & i1, const CDiagItem & i2)
+{
+	CDiagInfo aInfo;
+	aInfo.push_back (i1);
+	aInfo.push_back (i2);
+	return aInfo;
+}
+inline 
+CDiagInfo operator+= (CDiagInfo & raInfo, const CDiagItem & aItem)
+{
+	raInfo.push_back (aItem);
+	return raInfo;
+}
 //---------------------------------------------------------------------------
 // Parser-Objekte
 //---------------------------------------------------------------------------
@@ -277,12 +298,13 @@ public:
 	char*         alloc (size_t);
 	void          valid (bool b) {m_bValid = b; }
 
+	virtual const char * name() const { return m_strDebug.c_str(); }
 	CValue & set (const char * val);
 	CValue & set (double val);
 
 	void fetch (const CTerm*);
-	CValue & set (short type, double val);
-	CValue & set (short type, const char * val);
+	virtual CValue & set (short type, double val);
+	virtual CValue & set (short type, const char * val);
 	static bool isTrue (const CTerm *t) { return t==0 || t->asBool(); }
 	
 	bool   m_bValid;
@@ -292,9 +314,32 @@ public:
 	char * m_pString;
 	size_t m_nString;
 };
-
 //---------------------------------------------------------------------------
 typedef vector<CValue> CRecord;
+//---------------------------------------------------------------------------
+class CParam : public CValue
+{
+public:
+	friend class CStatement;
+	CParam (short id);
+	void assign (const CColumn *);
+
+	virtual const char * name() const { return m_szName; }
+
+	short id() const            { return m_nParam;   }
+	short IOType() const        { return m_nIOType;   }
+	short Nullable() const      { return m_nNullable; }
+	short DecimalDigits() const { return m_nDecimalDigits; }
+	ULONG ColumnSize() const    { return m_nColumnSize; }
+
+protected:
+	char            m_szName[256];
+	short			m_nParam;
+	short			m_nIOType;
+	short			m_nNullable;
+	short			m_nDecimalDigits;
+	ULONG			m_nColumnSize;
+};
 //---------------------------------------------------------------------------
 class CUnary : public CTerm
 {
@@ -365,25 +410,6 @@ protected:
 	const char * m_szColumn;
 
 	CTable * m_pTable;
-};
-//---------------------------------------------------------------------------
-class CParam : public CValue
-{
-public:
-	friend class CStatement;
-	CParam();
-	void assign (const CColumn *);
-
-	short IOType() const        { return m_IOType;   }
-	short Nullable() const      { return m_nNullable; }
-	short DecimalDigits() const { return m_nDecimalDigits; }
-	ULONG ColumnSize() const    { return m_nColumnSize; }
-
-protected:
-	short			m_IOType;
-	short			m_nNullable;
-	short			m_nDecimalDigits;
-	ULONG			m_nColumnSize;
 };
 //---------------------------------------------------------------------------
 class CTable : public CObject
