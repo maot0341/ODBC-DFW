@@ -4,6 +4,7 @@ http://www.ddj.com/windows/184416434;jsessionid=0BGTOTHR1PCDWQSNDLPSKH0CJUNN2JVN
 
 Debuggen
 "C:\Programme\Microsoft Office\OFFICE11\MSQRY32.EXE"
+"C:\Programme\Microsoft Office\Office10\MSQRY32.EXE"
 
 "C:\Programme\Microsoft Office\OFFICE11\MSACCESS.EXE"
 D:\jvater\odbc\Test.mdb

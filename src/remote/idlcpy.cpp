@@ -28,7 +28,7 @@
 #include <time.h>
 
 //---------------------------------------------------------------------------
-void idlcpy (const idl::typVariant & vValue, short nType, void* pValue, long nLen, long * pInd)
+void idlcpy (const idl::typValue & vValue, short nType, void* pValue, long nLen, long * pInd)
 {
 	if (vValue.isNull)
 	{
@@ -226,7 +226,7 @@ void idltime (double dTime, short nType, void* pValue, long nLen, long * pInd)
 //---------------------------------------------------------------------------
 // SQLAttributes:
 //---------------------------------------------------------------------------
-void idlcpy (const idl::typVariant &vValue, long * pnValue)
+void idlcpy (const idl::typValue &vValue, long * pnValue)
 {
 	assert (pnValue);
 	switch (vValue.aValue._d())
@@ -248,7 +248,7 @@ void idlcpy (const idl::typVariant &vValue, long * pnValue)
 	}
 }
 //---------------------------------------------------------------------------
-void idlcpy (const idl::typVariant & vValue, void* pStrVal, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen)
+void idlcpy (const idl::typValue & vValue, void* pStrVal, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen)
 {
 	assert (pStrVal);
 	assert (vValue.aValue._d() == idl::TermSTRING);
@@ -283,7 +283,7 @@ void idlcpy (idl::typParam & crbParam, const CParam & aParam)
 //	if (aParam.m_nValueType != SQL_C_DEFAULT)
 //		crbParam.m_nType = aParam.m_nValueType;
 
-	idl::typValue & raValue = crbParam.m_aValue.aValue;
+	idl::typVariant & raValue = crbParam.m_aValue.aValue;
 	short nType = aParam.m_nValueType;
 	void* pValue = aParam.m_pParameterValuePtr;
 	long* pInd = aParam.m_pStrLen_or_IndPtr;

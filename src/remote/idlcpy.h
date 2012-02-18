@@ -34,14 +34,14 @@
 
 using namespace std;
 //---------------------------------------------------------------------------
-void idlcpy (const idl::typVariant & vValue, short nType, void* pValue, long nLen, long * pInd);
+void idlcpy (const idl::typValue & vValue, short nType, void* pValue, long nLen, long * pInd);
 void idlcpy (const char * szValue, short nType, void* pValue, long nLen, long * pInd);
 void idlcpy (double dValue, short nType, void* pValue, long nLen, long * pInd);
 void idlcpy (long nValue, short nType, void* pValue, long nLen, long * pInd);
 void idltime (double dValue, short nType, void* pValue, long nLen, long * pInd);
 
-void idlcpy (const idl::typVariant& vValue, long* pValue);
-void idlcpy (const idl::typVariant& vValue, void* pValue, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen);
+void idlcpy (const idl::typValue& vValue, long* pValue);
+void idlcpy (const idl::typValue& vValue, void* pValue, SQLSMALLINT nStrLen, SQLSMALLINT * pStrLen);
 
 void idlcpy (idl::typParam &, const CParam &);
 

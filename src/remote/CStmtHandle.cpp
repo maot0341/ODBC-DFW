@@ -390,7 +390,7 @@ SQLRETURN CStmtHandle::SQLNumResultCols (SQLSMALLINT *pCols)
 	return RETN();
 }
 //---------------------------------------------------------------------------
-SQLRETURN CStmtHandle::SQLColAttribute (SQLUSMALLINT nCol, SQLUSMALLINT nAttr, idl::typVariant_var& vValue)
+SQLRETURN CStmtHandle::SQLColAttribute (SQLUSMALLINT nCol, SQLUSMALLINT nAttr, idl::typValue_var& vValue)
 {
 	ASSUME(!CORBA::is_nil (m_aIStub));
 	if (m_aIStub->_non_existent())

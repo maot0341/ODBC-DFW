@@ -55,7 +55,7 @@ public:
 
 	SQLRETURN SQLNumResultCols (SQLSMALLINT *pCols);
 	SQLRETURN SQLSpecialColumns (const CORBA::String_var &,const CORBA::String_var &,const CORBA::String_var &, SQLUSMALLINT,SQLUSMALLINT);
-	SQLRETURN SQLColAttribute (SQLUSMALLINT, SQLUSMALLINT, idl::typVariant_var&);
+	SQLRETURN SQLColAttribute (SQLUSMALLINT, SQLUSMALLINT, idl::typValue_var&);
 	SQLRETURN SQLPrepare (const char *);
 	SQLRETURN SQLStatistics (const CORBA::String_var &,const CORBA::String_var &,const CORBA::String_var &, SQLUSMALLINT,SQLUSMALLINT);
 	SQLRETURN SQLGetTypeInfo (SQLSMALLINT);

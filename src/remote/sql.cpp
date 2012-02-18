@@ -689,7 +689,7 @@ SQLColAttribute (SQLHSTMT hstmt
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
-	idl::typVariant_var crbValue;
+	idl::typValue_var crbValue;
 	SQLRETURN nRetn = pStmt->SQLColAttribute (iCol - 1, nDescType, crbValue);
 	ATTRN (SQL_DESC_AUTO_UNIQUE_VALUE);
 	switch (nDescType)

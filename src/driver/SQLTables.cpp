@@ -71,7 +71,7 @@ bool match (const string & s1, const char * szExpr)
 }
 
 //---------------------------------------------------------------------------
-CSQLTables::CSQLTables 
+CSQLTables::CSQLTables
 ( CSQLTablesData * pData
 , const char * szCatalog
 , const char * szSchema

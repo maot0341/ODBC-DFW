@@ -31,7 +31,7 @@
 class CLink
 {
 public:
-	virtual void write (const idl::typVariant &) const = 0;
+	virtual void write (const idl::typValue &) const = 0;
 	static CLink* create (SQLSMALLINT type, SQLPOINTER val, SQLINTEGER len=0, SQLINTEGER* ind=0);
 };
 //---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ public:
 	: m_pVal((T*)val), m_nLen(len), m_pInd(ind)
 	{}
 
-	virtual void write (const idl::typVariant & vVariant) const;
+	virtual void write (const idl::typValue & vValue) const;
 
 protected:
 	T*           m_pVal;
@@ -53,12 +53,12 @@ protected:
 };
 //---------------------------------------------------------------------------
 template<class T>
-void TLink<T>::write (const idl::typVariant & vVariant) const
+void TLink<T>::write (const idl::typValue & vValue) const
 {
 	////-----------------------------------------
 	//// Indicator
 	////-----------------------------------------
-	if (vVariant.isNull)
+	if (vValue.isNull)
 	{
 		SQL_SETPTR(m_pInd, SQL_NULL_DATA);
 		return;
@@ -69,7 +69,7 @@ void TLink<T>::write (const idl::typVariant & vVariant) const
 	////-----------------------------------------
 	if (!m_pVal)
 		return;
-	const idl::typValue & aValue = vVariant.aValue;
+	const idl::typVariant & aValue = vValue.aValue;
 	const idl::typTerm eType = aValue._d();
 	switch (eType)
 	{
@@ -93,12 +93,12 @@ void TLink<T>::write (const idl::typVariant & vVariant) const
 	}
 }
 //---------------------------------------------------------------------------
-void TLink<TIMESTAMP_STRUCT>::write (const idl::typVariant & vVariant) const
+void TLink<TIMESTAMP_STRUCT>::write (const idl::typValue & vValue) const
 {
 	////-----------------------------------------
 	//// Indicator
 	////-----------------------------------------
-	if (vVariant.isNull)
+	if (vValue.isNull)
 	{
 		SQL_SETPTR(m_pInd, SQL_NULL_DATA);
 		return;
@@ -109,7 +109,7 @@ void TLink<TIMESTAMP_STRUCT>::write (const idl::typVariant & vVariant) const
 	////-----------------------------------------
 	if (!m_pVal)
 		return;
-	const idl::typValue & aValue = vVariant.aValue;
+	const idl::typVariant & aValue = vValue.aValue;
 	const idl::typTerm eType = aValue._d();
 	const time_t nTime
 	= (eType == idl::TermTIME) ? aValue.dTime()
