@@ -1,7 +1,7 @@
 #pragma warning(disable : 4786)
 
-#ifndef __STDXSTRINGPOOL_H__
-#define __STDXSTRINGPOOL_H__
+#ifndef __STDX_STRINGPOOL_H__
+#define __STDX_STRINGPOOL_H__
 
 #include <string>
 #include <set>

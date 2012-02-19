@@ -27,7 +27,8 @@
 
 
 //---------------------------------------------------------------------------
-CParamImpl::CParamImpl()
+CParamImpl::CParamImpl (short id)
+: CParam(id)
 {
 	m_nValueType = 0;
 	m_nParameterType = 0;
@@ -40,6 +41,7 @@ CParamImpl::CParamImpl()
 }
 //---------------------------------------------------------------------------
 CParamImpl::CParamImpl (const CParamImpl & aParam)
+: CParam(aParam.id())
 {
 	m_nValueType = aParam.m_nValueType;
 	m_nParameterType = aParam.m_nParameterType;

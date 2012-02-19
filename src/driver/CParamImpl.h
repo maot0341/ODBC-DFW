@@ -30,7 +30,7 @@ using namespace sqlp;
 class CParamImpl : public CParam
 {
 public:
-	CParamImpl();
+	CParamImpl (short id=0);
 	CParamImpl (const CParamImpl &);
 //	const char * asString() const;
 

@@ -18,8 +18,8 @@
     @1        ??.??.00  ??
 ***************************************************************************************/
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#ifndef __STDX_UTILS_H__
+#define __STDX_UTILS_H__
 
 #include <stdarg.h>
 #include <assert.h>

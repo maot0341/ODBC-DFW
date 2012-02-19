@@ -22,6 +22,7 @@
 //#include <vld.h>
 #include "driver.h"
 #include "CStmtHandle.h"
+#include "SQLSpecialColumns.h"
 
 #include <windows.h>
 #include <sql.h>
@@ -773,6 +774,18 @@ SQLSpecialColumns(SQLHSTMT hstmt
 	CStmtHandle * pStmt = static_cast<CStmtHandle*>(hstmt);
 	if (!pStmt)
 		return SQL_INVALID_HANDLE;
+	string strCatalog = SQLString (pCatalog, nCatalog);
+	string strSchema = SQLString (pSchema, nSchema);
+	string strTable = SQLString (pTable, nTable);
+	const char * szCatalog = strCatalog.c_str();
+	const char * szSchema = strSchema.c_str();
+	const char * szTable = strTable.c_str();
+	return SQL_NO_DATA;
+
+	CTableImpl * pTable = new CSQLSpecialColumns(0, szCatalog, szSchema, szTable, nScope, nNullable);
+//	m_aTablePtr = auto_ptr<CTableImpl> (pTable);
+//	return RETN (SQL_SUCCESS, DIAG(pTable));
+
 	return SQL_ERROR;
 	EXCEPTION (hstmt);
 	return SQL_ERROR;

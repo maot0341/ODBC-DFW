@@ -226,8 +226,10 @@ CStmtHandle:: SQLBindParameter
 	short n = m_aAPD.size();
 	short i = nParam - 1;
 	assert (nParam > 0);
-	if (i >= n)
-		m_aAPD.resize (nParam);
+	while (i >= (n = m_aAPD.size()))
+		m_aAPD.push_back (CParamImpl(n+1));
+//	if (i >= n)
+//		m_aAPD.resize (nParam);
 	CParamImpl & raParam = m_aAPD[i];
 	raParam.m_nValueType = nValueType;
 	raParam.m_nParameterType = nParameterType;

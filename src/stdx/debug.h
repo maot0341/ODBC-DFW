@@ -18,8 +18,8 @@
     @1        ??.??.00  ??
 ***************************************************************************************/
 
-#ifndef __STDXDEBUG_H__
-#define __STDXDEBUG_H__
+#ifndef __STDX_DEBUG_H__
+#define __STDX_DEBUG_H__
 
 
 #include <windows.h>

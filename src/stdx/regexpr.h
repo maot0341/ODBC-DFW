@@ -18,8 +18,8 @@
     @1        ??.??.00  ??
 ***************************************************************************************/
 
-#ifndef __STDXREGEXPR_H__
-#define __STDXREGEXPR_H__
+#ifndef __STDX_REGEXPR_H__
+#define __STDX_REGEXPR_H__
 
 #pragma warning (disable: 4786)
 
