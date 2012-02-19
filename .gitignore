@@ -1,1 +1,12 @@
-Test.mdb
+bin/
+obj/
+lib/
+*.ncb
+*.aps
+*.opt
+*.lnk
+*.plg
+*.sav
+*.zip
+data/data_alt
+*.mdb
